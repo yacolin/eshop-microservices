@@ -9,7 +9,12 @@ import (
 
 // Setup 注册路由
 // 版本策略：v1 / v2 并行运行，待 v2 稳定后再移除旧版本注册即可
-func Setup(r *gin.Engine, inventoryHandler *handlers.InventoryHandler) {
+func Setup(
+	r *gin.Engine,
+	productHandler *handlers.ProductHandler,
+	inventoryHandler *handlers.InventoryHandler,
+	categoryHandler *handlers.CategoryHandler,
+) {
 	r.Use(middleware.Recovery(), middleware.Logger())
 
 	r.GET("/health", func(c *gin.Context) {
@@ -17,20 +22,25 @@ func Setup(r *gin.Engine, inventoryHandler *handlers.InventoryHandler) {
 	})
 
 	api := r.Group("/api")
-	registerV1(api, inventoryHandler)
-	// 后续增加 v2：复制 registerV1 为 registerV2，改 handler/逻辑，在此处加一行 registerV2(api, inventoryHandler)
+	registerV1(api, productHandler, inventoryHandler, categoryHandler)
+	// 后续增加 v2：复制 registerV1 为 registerV2，改 handler/逻辑，在此处加一行 registerV2(api, productHandler, inventoryHandler, categoryHandler)
 	// 下线 v1：删掉本行 registerV1 及下方 registerV1 函数即可
 }
 
-func registerV1(api *gin.RouterGroup, inventoryHandler *handlers.InventoryHandler) {
+func registerV1(
+	api *gin.RouterGroup,
+	productHandler *handlers.ProductHandler,
+	inventoryHandler *handlers.InventoryHandler,
+	categoryHandler *handlers.CategoryHandler,
+) {
 	// 产品相关路由：/api/v1/products（支持带或不带末尾 /）
 	products := api.Group("/v1/products")
 	{
-		products.POST("", inventoryHandler.CreateProduct)
-		products.GET("", inventoryHandler.ListProducts)
-		products.GET("/:id", inventoryHandler.GetProductByID)
-		products.PUT("/:id", inventoryHandler.UpdateProduct)
-		products.DELETE("/:id", inventoryHandler.DeleteProduct)
+		products.POST("", productHandler.CreateProduct)
+		products.GET("", productHandler.ListProducts)
+		products.GET("/:id", productHandler.GetProductByID)
+		products.PUT("/:id", productHandler.UpdateProduct)
+		products.DELETE("/:id", productHandler.DeleteProduct)
 	}
 
 	// 库存相关路由：/api/v1/inventories（支持带或不带末尾 /）
@@ -53,10 +63,10 @@ func registerV1(api *gin.RouterGroup, inventoryHandler *handlers.InventoryHandle
 	// 分类相关路由：/api/v1/categories（支持带或不带末尾 /）
 	categories := api.Group("/v1/categories")
 	{
-		categories.POST("", inventoryHandler.CreateCategory)
-		categories.GET("", inventoryHandler.ListCategories)
-		categories.GET("/:id", inventoryHandler.GetCategoryByID)
-		categories.PUT("/:id", inventoryHandler.UpdateCategory)
-		categories.DELETE("/:id", inventoryHandler.DeleteCategory)
+		categories.POST("", categoryHandler.CreateCategory)
+		categories.GET("", categoryHandler.ListCategories)
+		categories.GET("/:id", categoryHandler.GetCategoryByID)
+		categories.PUT("/:id", categoryHandler.UpdateCategory)
+		categories.DELETE("/:id", categoryHandler.DeleteCategory)
 	}
 }

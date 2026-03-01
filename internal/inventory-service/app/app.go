@@ -102,9 +102,11 @@ func (a *App) wire() error {
 	if a.mqClient != nil {
 		pub = inventorymq.NewPublisher(a.mqClient)
 	}
+	productHandler := handlers.NewProductHandler(inventorySvc, pub)
 	inventoryHandler := handlers.NewInventoryHandler(inventorySvc, pub)
+	categoryHandler := handlers.NewCategoryHandler(inventorySvc, pub)
 
 	a.engine = gin.New()
-	routes.Setup(a.engine, inventoryHandler)
+	routes.Setup(a.engine, productHandler, inventoryHandler, categoryHandler)
 	return nil
 }
