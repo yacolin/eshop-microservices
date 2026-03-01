@@ -69,6 +69,7 @@ build/
 tmp/
 temp/
 sample_data/
+docs/
 
 # Compiled binaries
 cmd/*/main.exe

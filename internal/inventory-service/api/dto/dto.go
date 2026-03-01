@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"eshop-microservices/internal/inventory-service/domain/models"
 	pkgQuery "eshop-microservices/pkg/query"
 )
 
@@ -13,6 +14,11 @@ type ProductListQuery struct {
 	Order  string `form:"order,default=asc"` // asc or desc
 }
 
+type ProductListResult struct {
+	Total int64            `json:"total"`
+	List  []models.Product `json:"list"`
+}
+
 // InventoryListQuery 库存列表查询参数
 type InventoryListQuery struct {
 	pkgQuery.Pagination
@@ -22,6 +28,11 @@ type InventoryListQuery struct {
 	LowStock    *bool  `form:"low_stock"`         // 是否低库存
 	SortBy      string `form:"sort_by"`           // 排序字段，例如 quantity, reserved, created_at
 	Order       string `form:"order,default=asc"` // asc or desc
+}
+
+type InventoryListResult struct {
+	Total int64              `json:"total"`
+	List  []models.Inventory `json:"list"`
 }
 
 // CreateProductDTO 创建产品请求
@@ -78,6 +89,11 @@ type CategoryListQuery struct {
 	ParentID *string `form:"parent_id"`         // 父分类ID
 	SortBy   string  `form:"sort_by"`           // 排序字段，例如 name, created_at
 	Order    string  `form:"order,default=asc"` // asc or desc
+}
+
+type CategoryListResult struct {
+	Total int64             `json:"total"`
+	List  []models.Category `json:"list"`
 }
 
 // CreateCategoryDTO 创建分类请求
