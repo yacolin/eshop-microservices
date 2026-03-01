@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: order_db
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --init-file=/docker-entrypoint-initdb.d/init.sql
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "10672:5672" # AMQP（Windows 常保留 5xxx，改用 10672）
+      - "15673:15672" # 管理界面 http://localhost:15673
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  order-service:
+    build:
+      context: .
+      args:
+        SERVICE: order-service
+    ports:
+      - "8080:8080"
+    environment:
+      CONFIG_PATH: /app/configs/order-service.docker.yaml
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+
+  inventory-service:
+    build:
+      context: .
+      args:
+        SERVICE: inventory-service
+    ports:
+      - "8081:8080"
+    environment:
+      CONFIG_PATH: /app/configs/inventory-service.docker.yaml
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+  # 新增服务时复制上面块，改服务名、端口、CONFIG_PATH，例如：
+  # user-service:
+  #   build: { context: .; args: { SERVICE: user-service } }
+  #   ports: - "8082:8080"
+  #   environment: { CONFIG_PATH: /app/configs/user-service.docker.yaml }
+  #   depends_on: [mysql, redis, rabbitmq]
+
+volumes:
+  mysql_data:

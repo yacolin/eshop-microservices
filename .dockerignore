@@ -1,0 +1,7 @@
+.git
+*.md
+Dockerfile
+docker-compose*.yml
+.dockerignore
+*.exe
+order-service

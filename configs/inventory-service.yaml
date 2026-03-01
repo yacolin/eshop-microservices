@@ -1,0 +1,28 @@
+# Docker 依赖（docker-compose）时使用此配置
+server:
+  port: 8081
+  mode: debug
+
+mysql:
+  host: localhost
+  port: 3306
+  user: root
+  password: root
+  dbname: inventory_db
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+rabbitmq:
+  url: amqp://guest:guest@localhost:10672/
+  exchange: eshop-events
+
+jwt:
+  secret: "你的超级秘密密钥"
+
+pagination:
+  default_size: 10
+  max_size: 100
