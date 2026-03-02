@@ -62,7 +62,9 @@ func (r *productRepository) DeleteProduct(ctx context.Context, id string) error 
 func (r *productRepository) ListProducts(ctx context.Context, q dto.ProductListQuery, offset, limit int) ([]models.Product, error) {
 	var products []models.Product
 	db := r.ApplyProductQuery(ctx, q)
-	err := db.Offset(offset).Limit(limit).Find(&products).Error
+
+	// 预加载分类Category 和多对多关系Categories
+	err := db.Preload("Category").Preload("Categories").Offset(offset).Limit(limit).Find(&products).Error
 	return products, err
 }
 

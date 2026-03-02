@@ -14,9 +14,9 @@ type Product struct {
 	Description string     `gorm:"type:text" json:"description"`
 	Price       int64      `gorm:"type:bigint;not null" json:"price"` // 价格，单位：分
 	SKU         string     `gorm:"type:varchar(100);uniqueIndex;not null" json:"sku"`
-	CategoryID  *string    `gorm:"type:varchar(36);index" json:"category_id"` // 分类ID
-	Category    *Category  `gorm:"foreignKey:CategoryID" json:"-"`            // 所属分类
-	Categories  []Category `gorm:"many2many:product_categories;" json:"-"`    // 多个分类
+	CategoryID  *string    `gorm:"type:varchar(36);index" json:"category_id"`       // 分类ID
+	Category    *Category  `gorm:"foreignKey:CategoryID" json:"category"`           // 所属分类
+	Categories  []Category `gorm:"many2many:product_categories;" json:"categories"` // 多个分类
 
 	CreatedAt utils.Timestamp `json:"created_at" gorm:"type:timestamp;default:CURRENT_TIMESTAMP()"`
 	UpdatedAt utils.Timestamp `json:"updated_at" gorm:"type:timestamp;default:CURRENT_TIMESTAMP();onUpdate:CURRENT_TIMESTAMP()"`
