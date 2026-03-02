@@ -121,7 +121,7 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 // @Param size query int false "每页大小，默认10"
 // @Param category_id query string false "分类ID"
 // @Param name query string false "产品名称"
-// @Success 200 {object} dto.ProductListResult "成功"
+// @Success 200 {object} response.APIResponse "成功"
 // @Router /inventory/api/v1/products [get]
 func (h *ProductHandler) ListProducts(c *gin.Context) {
 	var q dto.ProductListQuery

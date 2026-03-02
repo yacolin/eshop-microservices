@@ -119,7 +119,7 @@ func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 // @Produce json
 // @Param page query int false "页码，默认1"
 // @Param size query int false "每页大小，默认10"
-// @Success 200 {object} dto.CategoryListResult "成功"
+// @Success 200 {object} response.APIResponse "成功"
 // @Router /inventory/api/v1/categories [get]
 func (h *CategoryHandler) ListCategories(c *gin.Context) {
 	var q dto.CategoryListQuery

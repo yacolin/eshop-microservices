@@ -138,7 +138,7 @@ func (h *InventoryHandler) DeleteInventory(c *gin.Context) {
 // @Param page query int false "页码，默认1"
 // @Param size query int false "每页大小，默认10"
 // @Param product_id query string false "产品ID"
-// @Success 200 {object} dto.InventoryListResult "成功"
+// @Success 200 {object} response.APIResponse "成功"
 // @Router /inventory/api/v1/inventories [get]
 func (h *InventoryHandler) ListInventories(c *gin.Context) {
 	var q dto.InventoryListQuery

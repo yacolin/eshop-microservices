@@ -35,6 +35,7 @@ eshop-microservices/
 ## 当前实现：order-service
 
 - **API**
+
   - `POST /api/orders` 创建订单
   - `GET /api/orders` 订单列表（支持 `customer_id`、`page`、`page_size`）
   - `GET /api/orders/:id` 订单详情
@@ -77,28 +78,114 @@ eshop-microservices/
 所有服务共用根目录的 `go.mod`，每个服务一个入口：`cmd/<服务名>/main.go`。
 
 **本机启动指定服务：**
+
 ```powershell
 go run ./cmd/order-service
 go run ./cmd/user-service   # 新增服务后
 ```
+
 指定配置：`$env:CONFIG_PATH="configs/order-service.local.yaml"; go run ./cmd/order-service`
 
 **Docker 启动：** 使用同一 Dockerfile，通过构建参数 `SERVICE` 指定要编译的 cmd：
+
 ```powershell
 docker-compose up -d --build
 ```
+
 **修改代码后需重新构建镜像**（否则容器仍用旧镜像）：
+
 ```powershell
 docker-compose up -d --build        # 推荐：会利用缓存，只改 .go 时代码层重建，不会重新 go mod download
 ```
+
 Dockerfile 已按「先 COPY go.mod/go.sum 再 go mod download，最后 COPY 源码再 build」排序，**只改微服务代码时不会重新下载依赖**；只有改 go.mod/go.sum 时才会重新 download。启用 BuildKit 可进一步缓存模块目录：`$env:DOCKER_BUILDKIT=1; docker-compose up -d --build`。  
 需要完全清缓存再构建时再用：`docker-compose build --no-cache order-service`
 新增服务时：在 `docker-compose.yml` 里增加一个 service，设置 `build.args.SERVICE: user-service`、端口（如 8081）、`CONFIG_PATH` 和 `configs/user-service.docker.yaml` 即可。
 
 ## 配置说明
 
-| 环境变量 | 说明 |
-|----------|------|
+| 环境变量      | 说明                                            |
+| ------------- | ----------------------------------------------- |
 | `CONFIG_PATH` | 配置文件路径，默认 `configs/order-service.yaml` |
 
 配置文件支持 Viper 的 env 覆盖，例如：`MYSQL_HOST`、`SERVER_PORT` 等（点号用下划线替代）。
+
+## Docker Compose 常用操作
+
+### 启动服务
+
+```bash
+# 启动所有服务（后台运行）
+docker-compose up -d
+
+# 启动指定服务
+docker-compose up -d order-service
+
+# 启动并重新构建镜像
+docker-compose up -d --build
+```
+
+### 停止服务
+
+```bash
+# 停止所有服务
+docker-compose down
+
+# 停止指定服务
+docker-compose stop order-service
+```
+
+### 查看日志
+
+```bash
+# 查看所有服务日志
+docker-compose logs
+
+# 查看指定服务日志
+docker-compose logs order-service
+
+# 持续跟踪日志（实时输出）
+docker-compose logs -f order-service
+
+# 查看最近的 N 行日志
+docker-compose logs --tail=100 order-service
+
+# 禁用颜色输出
+docker-compose logs --no-color order-service
+```
+
+### 查看服务状态
+
+```bash
+# 查看所有服务状态
+docker-compose ps
+
+# 查看指定服务状态
+docker-compose ps order-service
+```
+
+### 进入容器
+
+```bash
+# 进入指定服务容器
+docker-compose exec order-service sh
+
+# 进入容器并执行命令
+docker-compose exec order-service ls -la
+```
+
+### 其他操作
+
+```bash
+# 构建镜像（不启动）
+docker-compose build order-service
+
+# 构建镜像（不使用缓存）
+docker-compose build --no-cache order-service
+
+# 查看配置
+docker-compose config
+
+# 查看容器资源使用情况
+docker stats $(docker-compose ps -q)
+```
