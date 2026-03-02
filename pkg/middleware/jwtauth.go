@@ -34,16 +34,24 @@ func JWTAuth() gin.HandlerFunc {
 			return
 		}
 
-		// extract user_id and store as typed uint in context
-		userIDFloat, ok := claims["user_id"].(float64)
+		// extract user_id and store in context (supports string UUID or numeric ID)
+		userID, ok := claims["user_id"]
 		if !ok {
 			c.Error(errcode.ErrUnauthorized)
 			c.Abort()
 			return
 		}
 
-		// convert to uint and set
-		c.Set("user_id", uint(userIDFloat))
+		switch v := userID.(type) {
+		case string:
+			c.Set("user_id", v)
+		case float64:
+			c.Set("user_id", uint(v))
+		default:
+			c.Error(errcode.ErrUnauthorized)
+			c.Abort()
+			return
+		}
 		c.Next()
 	}
 }

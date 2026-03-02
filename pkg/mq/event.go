@@ -93,3 +93,22 @@ type CategoryUpdatedEvent struct {
 type CategoryDeletedEvent struct {
 	ID string `json:"id"`
 }
+
+// UserCreatedEvent 用户创建事件
+type UserCreatedEvent struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
+// UserUpdatedEvent 用户更新事件
+type UserUpdatedEvent struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
+// UserDeletedEvent 用户删除事件
+type UserDeletedEvent struct {
+	ID string `json:"id"`
+}

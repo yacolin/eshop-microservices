@@ -19,20 +19,20 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func GenerateToken(userID uint64) (string, error) {
+func GenerateToken(userID string) (string, error) {
 	// default to 24h access token for backwards compatibility
 	return GenerateAccessToken(userID)
 }
 
-func GenerateAccessToken(userID uint64) (string, error) {
+func GenerateAccessToken(userID string) (string, error) {
 	return generateTokenWithType(userID, 15*time.Minute, "access")
 }
 
-func GenerateRefreshToken(userID uint64) (string, error) {
+func GenerateRefreshToken(userID string) (string, error) {
 	return generateTokenWithType(userID, 7*24*time.Hour, "refresh")
 }
 
-func generateTokenWithType(userID uint64, ttl time.Duration, typ string) (string, error) {
+func generateTokenWithType(userID string, ttl time.Duration, typ string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"exp":     time.Now().Add(ttl).Unix(),
