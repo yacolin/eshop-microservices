@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package inventory;
+
+option go_package = "eshop-microservices/api/proto/inventorypb";
+
+// 库存服务
+service InventoryService {
+  // 检查并预占库存
+  rpc ReserveStock(ReserveStockRequest) returns (ReserveStockResponse);
+  // 确认扣减库存（最终扣减）
+  rpc ConfirmDeduct(ConfirmDeductRequest) returns (ConfirmDeductResponse);
+  // 释放预占库存（回滚）
+  rpc ReleaseStock(ReleaseStockRequest) returns (ReleaseStockResponse);
+  // 检查库存可用性
+  rpc CheckStockAvailability(CheckStockRequest) returns (CheckStockResponse);
+}
+
+// 库存项
+message StockItem {
+  string product_id = 1;
+  int32 quantity = 2;
+}
+
+// 预占库存请求
+message ReserveStockRequest {
+  string order_id = 1;
+  repeated StockItem items = 2;
+}
+
+// 预占库存响应
+message ReserveStockResponse {
+  bool success = 1;
+  string message = 2;
+  string reservation_id = 3;
+}
+
+// 确认扣减请求
+message ConfirmDeductRequest {
+  string order_id = 1;
+  string reservation_id = 2;
+  repeated StockItem items = 3;
+}
+
+// 确认扣减响应
+message ConfirmDeductResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// 释放库存请求
+message ReleaseStockRequest {
+  string order_id = 1;
+  string reservation_id = 2;
+  repeated StockItem items = 3;
+}
+
+// 释放库存响应
+message ReleaseStockResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// 检查库存请求
+message CheckStockRequest {
+  string product_id = 1;
+  int32 quantity = 2;
+}
+
+// 检查库存响应
+message CheckStockResponse {
+  bool available = 1;
+  int32 available_quantity = 2;
+  string product_id = 3;
+}

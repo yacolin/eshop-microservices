@@ -83,3 +83,8 @@ func (c *Client) Close() error {
 	}
 	return nil
 }
+
+// GetConnection 获取底层连接（用于创建消费者）
+func (c *Client) GetConnection() *amqp.Connection {
+	return c.conn
+}
