@@ -5,6 +5,11 @@ import (
 	"eshop-microservices/internal/order-service/api/middleware"
 
 	"github.com/gin-gonic/gin"
+
+	_ "eshop-microservices/docs"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // Setup 注册路由
@@ -15,6 +20,10 @@ func Setup(r *gin.Engine, orderHandler *handlers.OrderHandler) {
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "order ok"})
 	})
+
+	// Swagger路由
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.StaticFile("/swagger-json", "./docs/swagger.json")
 
 	api := r.Group("/api")
 	registerV1(api, orderHandler)
