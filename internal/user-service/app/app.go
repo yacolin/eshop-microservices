@@ -74,7 +74,13 @@ func (a *App) wire() error {
 		return fmt.Errorf("mysql: %w", err)
 	}
 	a.db = db
-	if err := a.db.AutoMigrate(&models.User{}, &models.UserInfo{}); err != nil {
+	if err := a.db.AutoMigrate(
+		&models.User{},
+		&models.UserInfo{},
+		&models.UserIdentity{},
+		&models.AuthToken{},
+		&models.LoginHistory{},
+	); err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}
 
@@ -91,16 +97,32 @@ func (a *App) wire() error {
 		}
 	}
 
+	// 初始化 repositories
 	userRepo := repositories.NewUserRepository(a.db)
+	identityRepo := repositories.NewUserIdentityRepository(a.db)
+	tokenRepo := repositories.NewAuthTokenRepository(a.db)
+	loginHistoryRepo := repositories.NewLoginHistoryRepository(a.db)
+
+	// 初始化 token service
+	tokenSvc := service.NewTokenService(a.cfg.JWT.Secret, tokenRepo)
+
+	// 初始化 auth service
+	authSvc := service.NewAuthService(a.db, userRepo, identityRepo, tokenRepo, loginHistoryRepo, tokenSvc)
+
+	// 初始化 user service
 	userSvc := service.NewUserService(userRepo)
 	userSvc.SetJWTSecret(a.cfg.JWT.Secret)
+
 	var pub *usermq.Publisher
 	if a.mqClient != nil {
 		pub = usermq.NewPublisher(a.mqClient)
 	}
+
+	// 初始化 handlers
 	userHandler := handlers.NewUserHandler(userSvc, pub)
+	authHandler := handlers.NewAuthHandler(authSvc, tokenSvc, userSvc)
 
 	a.engine = gin.New()
-	routes.Setup(a.engine, userHandler)
+	routes.Setup(a.engine, userHandler, authHandler)
 	return nil
 }

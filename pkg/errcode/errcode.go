@@ -28,4 +28,19 @@ var (
 	ErrUserAlreadyRegistered  = &BizError{Code: 1012, Message: "user already registered"}
 
 	ErrNotFound = &BizError{Code: 1013, Message: "resource not found"}
+
+	ErrAccountDisabled           = &BizError{Code: 1014, Message: "account disabled"}
+	ErrWechatClientNotConfigured = &BizError{Code: 1015, Message: "wechat client not configured"}
+	ErrUsernameAlreadyExists     = &BizError{Code: 1016, Message: "username already exists"}
+	ErrUnsupportedProvider       = &BizError{Code: 1017, Message: "unsupported provider"}
+	ErrIdentityAlreadyBound      = &BizError{Code: 1018, Message: "identity already bound"}
+
+	ErrInvalidToken = &BizError{Code: 1019, Message: "invalid token"}
+	ErrTokenRevoked = &BizError{Code: 1020, Message: "token revoked"}
+
+	ErrGenerateAccessToken      = &BizError{Code: 1021, Message: "generate access token failed"}
+	ErrGenerateRefreshToken     = &BizError{Code: 1022, Message: "generate refresh token failed"}
+	ErrSaveRefreshToken         = &BizError{Code: 1023, Message: "save refresh token failed"}
+	ErrUnexpectedSigningMethod  = &BizError{Code: 1024, Message: "unexpected signing method"}
+	ErrParseToken               = &BizError{Code: 1025, Message: "parse token failed"}
 )

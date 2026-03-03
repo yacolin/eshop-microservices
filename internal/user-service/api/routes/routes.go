@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(r *gin.Engine, userHandler *handlers.UserHandler) {
+func Setup(r *gin.Engine, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler) {
 	r.Use(middleware.Recovery(), middleware.Logger(), pkgmiddleware.ErrorHandler())
 
 	r.GET("/health", func(c *gin.Context) {
@@ -16,26 +16,45 @@ func Setup(r *gin.Engine, userHandler *handlers.UserHandler) {
 	})
 
 	api := r.Group("/api")
-	registerV1(api, userHandler)
+	registerV1(api, userHandler, authHandler)
 }
 
-func registerV1(api *gin.RouterGroup, userHandler *handlers.UserHandler) {
-	users := api.Group("/v1/users")
-
-	// 公开路由（不需要认证）
-	public := users.Group("")
+func registerV1(api *gin.RouterGroup, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler) {
+	// 认证相关路由（统一使用 auth handler）
+	auth := api.Group("/v1/auth")
 	{
-		public.POST("/register", userHandler.Register)
-		public.POST("/login", userHandler.Login)
+		// 登录路由
+		auth.POST("/login/password", authHandler.LoginByPassword)
+		auth.POST("/login/wechat", authHandler.LoginByWechat)
+		auth.POST("/login/phone", authHandler.LoginByPhone)
+
+		// 注册路由
+		auth.POST("/register", authHandler.Register)
+
+		// Token管理
+		auth.POST("/refresh", authHandler.RefreshToken)
+		auth.POST("/logout", authHandler.Logout)
+
+		// 需要认证的路由
+		auth.Use(pkgmiddleware.JWTAuth())
+		auth.GET("/me", authHandler.GetCurrentUser)
 	}
 
-	// 需要认证的路由
-	protected := users.Group("").Use(pkgmiddleware.JWTAuth())
+	// 用户相关路由（只保留用户资料管理，登录/注册/登出统一使用 /auth）
+	users := api.Group("/v1/users")
 	{
-		protected.GET("/profile", userHandler.GetProfile)
-		protected.PUT("/profile", userHandler.UpdateProfile)
-		protected.POST("/logout", userHandler.Logout)
-		protected.GET("/info", userHandler.GetUserInfo)
-		protected.PUT("/info", userHandler.UpdateUserInfo)
+		// 需要认证的路由
+		protected := users.Group("").Use(pkgmiddleware.JWTAuth())
+		{
+			// 获取用户资料（包含 User 和 UserInfo）
+			protected.GET("/profile", userHandler.GetProfile)
+			
+			// 用户详细信息管理（Avatar、Nickname 等）
+			protected.GET("/info", userHandler.GetUserInfo)
+			protected.PUT("/info", userHandler.UpdateUserInfo)
+			
+			// 根据ID获取用户（管理员接口）
+			protected.GET("/:id", userHandler.GetByID)
+		}
 	}
 }

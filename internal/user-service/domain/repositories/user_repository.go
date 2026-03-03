@@ -12,8 +12,6 @@ type UserRepository interface {
 	Create(ctx context.Context, user *models.User) error
 	GetByID(ctx context.Context, id string) (*models.User, error)
 	GetByIDWithInfo(ctx context.Context, id string) (*models.User, error)
-	GetByUsername(ctx context.Context, username string) (*models.User, error)
-	GetByEmail(ctx context.Context, email string) (*models.User, error)
 	Update(ctx context.Context, user *models.User) error
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, limit, offset int) ([]models.User, int64, error)
@@ -58,24 +56,6 @@ func (r *userRepository) GetByID(ctx context.Context, id string) (*models.User, 
 func (r *userRepository) GetByIDWithInfo(ctx context.Context, id string) (*models.User, error) {
 	var user models.User
 	err := r.db.WithContext(ctx).Preload("UserInfo").Where("id = ?", id).First(&user).Error
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
-func (r *userRepository) GetByUsername(ctx context.Context, username string) (*models.User, error) {
-	var user models.User
-	err := r.db.WithContext(ctx).Where("username = ?", username).First(&user).Error
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
-func (r *userRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
-	var user models.User
-	err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
