@@ -16,6 +16,7 @@ import (
 	"eshop-microservices/internal/order-service/service"
 	"eshop-microservices/pkg/config"
 	"eshop-microservices/pkg/database"
+	"eshop-microservices/pkg/middleware"
 	"eshop-microservices/pkg/mq"
 
 	"github.com/gin-gonic/gin"
@@ -149,6 +150,7 @@ func (a *App) wire() error {
 	}
 
 	a.engine = gin.New()
+	a.engine.Use(middleware.ErrorHandler())
 	routes.Setup(a.engine, orderHandler)
 	return nil
 }

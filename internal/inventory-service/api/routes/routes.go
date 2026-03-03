@@ -23,7 +23,7 @@ func Setup(
 	r.Use(middleware.Recovery(), middleware.Logger())
 
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
+		c.JSON(200, gin.H{"status": "inventory ok"})
 	})
 
 	// Swagger路由

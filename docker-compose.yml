@@ -64,12 +64,15 @@ services:
       - "8080:8080"
     environment:
       CONFIG_PATH: /app/configs/order-service.docker.yaml
+      INVENTORY_SERVICE_ADDR: inventory-service:50051
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_started
       rabbitmq:
+        condition: service_started
+      inventory-service:
         condition: service_started
     networks:
       - microservices-network
@@ -81,6 +84,7 @@ services:
         SERVICE: inventory-service
     ports:
       - "8081:8080"
+      - "50051:50051"
     environment:
       CONFIG_PATH: /app/configs/inventory-service.docker.yaml
     depends_on:

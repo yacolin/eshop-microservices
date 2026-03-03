@@ -31,12 +31,15 @@ func NewOrderRepository(db *gorm.DB) OrderRepository {
 }
 
 func (r *orderRepository) Create(ctx context.Context, order *models.Order) error {
+	// GORM will automatically create related OrderItem records when the
+	// parent Order is created (since Items is a has-many relation). The
+	// previous implementation explicitly called Create on order.Items a
+	// second time, resulting in duplicate primary key errors when the
+	// BeforeCreate hook generated IDs on the first insert. We now rely on
+	// the single call below to insert both order and items in one shot.
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(order).Error; err != nil {
 			return err
-		}
-		if len(order.Items) > 0 {
-			return tx.Create(&order.Items).Error
 		}
 		return nil
 	})

@@ -12,7 +12,7 @@ func Setup(r *gin.Engine, userHandler *handlers.UserHandler, authHandler *handle
 	r.Use(middleware.Recovery(), middleware.Logger(), pkgmiddleware.ErrorHandler())
 
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
+		c.JSON(200, gin.H{"status": "user ok"})
 	})
 
 	api := r.Group("/api")
@@ -48,11 +48,11 @@ func registerV1(api *gin.RouterGroup, userHandler *handlers.UserHandler, authHan
 		{
 			// 获取用户资料（包含 User 和 UserInfo）
 			protected.GET("/profile", userHandler.GetProfile)
-			
+
 			// 用户详细信息管理（Avatar、Nickname 等）
 			protected.GET("/info", userHandler.GetUserInfo)
 			protected.PUT("/info", userHandler.UpdateUserInfo)
-			
+
 			// 根据ID获取用户（管理员接口）
 			protected.GET("/:id", userHandler.GetByID)
 		}

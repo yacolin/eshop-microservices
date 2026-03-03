@@ -13,6 +13,7 @@ import (
 	"eshop-microservices/pkg/logger"
 	"eshop-microservices/pkg/query"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -62,6 +63,7 @@ func (s *OrderService) Create(ctx context.Context, req dto.CreateOrderDTO) (*mod
 	for _, it := range req.Items {
 		amount := it.UnitPrice * int64(it.Quantity)
 		order.Items = append(order.Items, models.OrderItem{
+			ID:        uuid.New().String(),
 			ProductID: it.ProductID,
 			Quantity:  it.Quantity,
 			UnitPrice: it.UnitPrice,

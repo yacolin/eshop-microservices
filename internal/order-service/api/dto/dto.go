@@ -16,7 +16,6 @@ type OrderListQuery struct {
 }
 
 type CreateOrderDTO struct {
-	RequestID  string               `json:"request_id" binding:"required,uuid4"` // 幂等性标识
 	CustomerID string               `json:"customer_id" binding:"required"`
 	Currency   string               `json:"currency"` // 可选，默认 CNY
 	Items      []CreateOrderItemDTO `json:"items" binding:"required,min=1,dive"`

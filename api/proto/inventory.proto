@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package inventory;
 
-option go_package = "eshop-microservices/api/proto/inventorypb";
+option go_package = "eshop-microservices/api/proto/inventorypb;inventorypb";
 
 // 库存服务
 service InventoryService {

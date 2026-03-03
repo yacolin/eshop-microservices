@@ -13,7 +13,7 @@ func Setup(r *gin.Engine, orderHandler *handlers.OrderHandler) {
 	r.Use(middleware.Recovery(), middleware.Logger())
 
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
+		c.JSON(200, gin.H{"status": "order ok"})
 	})
 
 	api := r.Group("/api")
