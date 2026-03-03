@@ -80,6 +80,7 @@ func (s *AuthService) LoginByPassword(ctx context.Context, payload *auth.Passwor
 
 	// 2. 验证密码
 	if !utils.CheckPasswordHash(payload.Password, identity.Credential) {
+		// 密码验证失败，返回无效凭证错误
 		return nil, nil, errcode.ErrInvalidCredentials
 	}
 
@@ -247,8 +248,7 @@ func (s *AuthService) Register(ctx context.Context, payload *auth.RegisterPayloa
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 创建用户 - 只保留业务字段
 		user = &models.User{
-			Status:   1,
-			UserInfo: &models.UserInfo{},
+			Status: 1,
 		}
 
 		if err := tx.Create(user).Error; err != nil {
@@ -256,8 +256,10 @@ func (s *AuthService) Register(ctx context.Context, payload *auth.RegisterPayloa
 		}
 
 		// 创建用户详情
-		user.UserInfo.UserID = user.ID
-		if err := tx.Create(user.UserInfo).Error; err != nil {
+		userInfo := &models.UserInfo{
+			UserID: user.ID,
+		}
+		if err := tx.Create(userInfo).Error; err != nil {
 			return err
 		}
 
@@ -275,6 +277,7 @@ func (s *AuthService) Register(ctx context.Context, payload *auth.RegisterPayloa
 				Identifier: payload.Username,
 				Credential: string(hashedPassword),
 				Verified:   true,
+				Meta:       "{}",
 			}
 		case models.ProviderPhone.String():
 			identity = &models.UserIdentity{
@@ -282,6 +285,7 @@ func (s *AuthService) Register(ctx context.Context, payload *auth.RegisterPayloa
 				Provider:   models.ProviderPhone.String(),
 				Identifier: payload.Phone,
 				Verified:   true,
+				Meta:       "{}",
 			}
 		case models.ProviderEmail.String():
 			identity = &models.UserIdentity{
@@ -289,6 +293,7 @@ func (s *AuthService) Register(ctx context.Context, payload *auth.RegisterPayloa
 				Provider:   models.ProviderEmail.String(),
 				Identifier: payload.Email,
 				Verified:   true,
+				Meta:       "{}",
 			}
 		default:
 			return errcode.ErrUnsupportedProvider

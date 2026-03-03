@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"eshop-microservices/internal/user-service/api/dto"
 	"eshop-microservices/internal/user-service/domain/models"
@@ -71,7 +72,10 @@ func (s *UserService) UpdateUserInfo(ctx context.Context, userID string, req dto
 	if req.Birthday != "" {
 		// Parse birthday string to time.Time
 		// Assuming format: 2006-01-02
-		// userInfo.Birthday = &birthday
+		birthday, err := time.Parse("2006-01-02", req.Birthday)
+		if err == nil {
+			userInfo.Birthday = &birthday
+		}
 	}
 	if req.Address != "" {
 		userInfo.Address = req.Address

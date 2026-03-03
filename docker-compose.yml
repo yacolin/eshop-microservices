@@ -13,6 +13,7 @@ services:
     depends_on:
       - order-service
       - inventory-service
+      - user-service
 
     networks:
       - microservices-network
@@ -91,6 +92,26 @@ services:
         condition: service_started
     networks:
       - microservices-network
+
+  user-service:
+    build:
+      context: .
+      args:
+        SERVICE: user-service
+    ports:
+      - "8082:8080"
+    environment:
+      CONFIG_PATH: /app/configs/user-service.docker.yaml
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    networks:
+      - microservices-network
+
   # 新增服务时复制上面块，改服务名、端口、CONFIG_PATH，例如：
   # user-service:
   #   build: { context: .; args: { SERVICE: user-service } }
