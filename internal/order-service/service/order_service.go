@@ -9,11 +9,12 @@ import (
 	"eshop-microservices/internal/order-service/clients"
 	"eshop-microservices/internal/order-service/domain/models"
 	"eshop-microservices/internal/order-service/domain/repositories"
+	ordersaga "eshop-microservices/internal/order-service/saga"
 	"eshop-microservices/pkg/errcode"
 	"eshop-microservices/pkg/logger"
 	"eshop-microservices/pkg/query"
+	"eshop-microservices/pkg/saga"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -21,13 +22,15 @@ import (
 type OrderService struct {
 	repo            repositories.OrderRepository
 	inventoryClient *clients.InventoryClient
+	createOrderSaga *ordersaga.CreateOrderSaga
 }
 
 // NewOrderService 创建订单服务
-func NewOrderService(repo repositories.OrderRepository, inventoryClient *clients.InventoryClient) *OrderService {
+func NewOrderService(repo repositories.OrderRepository, inventoryClient *clients.InventoryClient, sagaLog saga.SagaLog) *OrderService {
 	return &OrderService{
 		repo:            repo,
 		inventoryClient: inventoryClient,
+		createOrderSaga: ordersaga.NewCreateOrderSaga(repo, inventoryClient, sagaLog),
 	}
 }
 
@@ -45,90 +48,37 @@ type CreateOrderItemReq struct {
 	UnitPrice int64  `json:"unit_price" binding:"required,min=0"` // 单价，单位：分
 }
 
-// Create 创建订单 - 使用 gRPC 预占库存
+// Create 创建订单 - 使用 Saga 模式保证分布式事务
 func (s *OrderService) Create(ctx context.Context, req dto.CreateOrderDTO) (*models.Order, error) {
-	currency := req.Currency
-	if currency == "" {
-		currency = "CNY"
+	logger.Info("creating order with saga pattern",
+		zap.String("customer_id", req.CustomerID),
+		zap.Int("item_count", len(req.Items)))
+
+	// 使用 Saga 模式执行创建订单流程
+	result, err := s.createOrderSaga.Execute(ctx, req)
+	if err != nil {
+		logger.Error("create order saga failed",
+			zap.Error(err),
+			zap.String("saga_id", result.SagaID))
+		return nil, fmt.Errorf("failed to create order: %w", err)
 	}
 
-	// 构建订单对象
-	order := &models.Order{
-		CustomerID: req.CustomerID,
-		Currency:   currency,
-		Status:     models.OrderStatusPending,
-	}
+	logger.Info("order created successfully with saga",
+		zap.String("order_id", result.Order.ID),
+		zap.String("saga_id", result.SagaID),
+		zap.String("reservation_id", result.ReservationID))
 
-	var total int64
-	for _, it := range req.Items {
-		amount := it.UnitPrice * int64(it.Quantity)
-		order.Items = append(order.Items, models.OrderItem{
-			ID:        uuid.New().String(),
-			ProductID: it.ProductID,
-			Quantity:  it.Quantity,
-			UnitPrice: it.UnitPrice,
-			Amount:    amount,
-		})
-		total += amount
-	}
-	order.TotalAmount = total
+	return result.Order, nil
+}
 
-	// 如果配置了库存服务客户端，先预占库存
-	if s.inventoryClient != nil {
-		// 构建库存预占请求
-		stockItems := make([]*inventorypb.StockItem, 0, len(req.Items))
-		for _, item := range req.Items {
-			stockItems = append(stockItems, &inventorypb.StockItem{
-				ProductId: item.ProductID,
-				Quantity:  int32(item.Quantity),
-			})
-		}
+// CreateWithSaga 使用 Saga 模式创建订单（返回 Saga ID 用于追踪）
+func (s *OrderService) CreateWithSaga(ctx context.Context, req dto.CreateOrderDTO) (*ordersaga.CreateOrderResult, error) {
+	return s.createOrderSaga.Execute(ctx, req)
+}
 
-		// 先保存订单获取订单ID
-		if err := s.repo.Create(ctx, order); err != nil {
-			return nil, err
-		}
-
-		// 调用 gRPC 预占库存
-		reserveResp, err := s.inventoryClient.ReserveStock(ctx, order.ID, stockItems)
-		if err != nil {
-			// 预占失败，删除订单
-			if delErr := s.repo.Delete(ctx, order.ID); delErr != nil {
-				logger.Error("failed to delete order after stock reserve failed", zap.Error(delErr))
-			}
-			return nil, fmt.Errorf("failed to reserve stock: %w", err)
-		}
-
-		if !reserveResp.Success {
-			// 预占失败，删除订单
-			if delErr := s.repo.Delete(ctx, order.ID); delErr != nil {
-				logger.Error("failed to delete order after stock reserve failed", zap.Error(delErr))
-			}
-			return nil, fmt.Errorf("stock reserve failed: %s", reserveResp.Message)
-		}
-
-		// 预占成功，更新订单状态为已确认
-		order.Status = models.OrderStatusConfirmed
-		if err := s.repo.UpdateStatus(ctx, order.ID, models.OrderStatusConfirmed); err != nil {
-			// 更新状态失败，尝试释放库存
-			_, releaseErr := s.inventoryClient.ReleaseStock(ctx, order.ID, reserveResp.ReservationId, stockItems)
-			if releaseErr != nil {
-				logger.Error("failed to release stock after order status update failed", zap.Error(releaseErr))
-			}
-			return nil, fmt.Errorf("failed to update order status: %w", err)
-		}
-
-		logger.Info("order created with stock reserved",
-			zap.String("order_id", order.ID),
-			zap.String("reservation_id", reserveResp.ReservationId))
-	} else {
-		// 没有库存客户端，直接创建订单
-		if err := s.repo.Create(ctx, order); err != nil {
-			return nil, err
-		}
-	}
-
-	return order, nil
+// GetSagaStatus 获取 Saga 执行状态
+func (s *OrderService) GetSagaStatus(ctx context.Context, sagaID string) (*saga.Saga, error) {
+	return s.createOrderSaga.GetSagaStatus(ctx, sagaID)
 }
 
 // GetByID 获取订单详情

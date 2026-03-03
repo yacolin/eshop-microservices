@@ -18,6 +18,7 @@ import (
 	"eshop-microservices/pkg/database"
 	"eshop-microservices/pkg/middleware"
 	"eshop-microservices/pkg/mq"
+	"eshop-microservices/pkg/saga"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -131,7 +132,18 @@ func (a *App) wire() error {
 	}
 
 	orderRepo := repositories.NewOrderRepository(a.db)
-	orderSvc := service.NewOrderService(orderRepo, a.inventoryClient)
+
+	// 初始化 Saga 日志存储（优先使用 Redis，否则使用内存存储）
+	var sagaLog saga.SagaLog
+	if rdb != nil {
+		sagaLog = saga.NewRedisLog(rdb)
+		log.Println("saga log: using redis storage")
+	} else {
+		sagaLog = saga.NewMemoryLog()
+		log.Println("saga log: using memory storage")
+	}
+
+	orderSvc := service.NewOrderService(orderRepo, a.inventoryClient, sagaLog)
 	var pub *ordermq.Publisher
 	if a.mqClient != nil {
 		pub = ordermq.NewPublisher(a.mqClient)

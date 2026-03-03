@@ -31,5 +31,6 @@ func registerV1(api *gin.RouterGroup, orderHandler *handlers.OrderHandler) {
 		orders.GET("/:id", orderHandler.GetByID)
 		orders.PUT("/:id", orderHandler.UpdateStatus)
 		orders.DELETE("/:id", orderHandler.Cancel)
+		orders.GET("/saga/:saga_id", orderHandler.GetSagaStatus)
 	}
 }

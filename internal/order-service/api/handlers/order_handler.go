@@ -105,3 +105,14 @@ func (h *OrderHandler) Cancel(c *gin.Context) {
 	}
 	response.Success(c, gin.H{"message": "cancelled"})
 }
+
+// GetSagaStatus 获取 Saga 执行状态 GET /api/orders/saga/:saga_id
+func (h *OrderHandler) GetSagaStatus(c *gin.Context) {
+	sagaID := c.Param("saga_id")
+	saga, err := h.orderSvc.GetSagaStatus(c.Request.Context(), sagaID)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	response.Success(c, saga)
+}
