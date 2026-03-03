@@ -27,12 +27,13 @@ import (
 
 // App order-service 应用入口，负责配置加载、依赖装配与服务启动
 type App struct {
-	cfg             *config.Config
-	db              *gorm.DB
-	mqClient        *mq.Client
-	engine          *gin.Engine
-	inventoryClient *clients.InventoryClient
-	mqConsumer      *ordermq.Consumer
+	cfg                *config.Config
+	db                 *gorm.DB
+	mqClient           *mq.Client
+	engine             *gin.Engine
+	inventoryClient    *clients.InventoryClient
+	mqConsumer         *ordermq.Consumer
+	inventoryConsumer  *ordermq.InventoryConsumer
 }
 
 // New 加载配置并创建 App，configPath 为空时从环境变量 CONFIG_PATH 读取，再默认 configs/order-service.yaml
@@ -65,10 +66,17 @@ func (a *App) Run() error {
 		}
 	}()
 
-	// 启动 MQ 消费者
+	// 启动 MQ 消费者（订单事件）
 	if a.mqConsumer != nil {
 		if err := a.mqConsumer.Start(); err != nil {
 			log.Printf("mq consumer: %v", err)
+		}
+	}
+
+	// 启动库存事件消费者
+	if a.inventoryConsumer != nil {
+		if err := a.inventoryConsumer.Start(); err != nil {
+			log.Printf("inventory mq consumer: %v", err)
 		}
 	}
 
@@ -80,6 +88,9 @@ func (a *App) Run() error {
 	// 优雅关闭
 	if a.mqConsumer != nil {
 		a.mqConsumer.Stop()
+	}
+	if a.inventoryConsumer != nil {
+		a.inventoryConsumer.Stop()
 	}
 	if a.mqClient != nil {
 		a.mqClient.Close()
@@ -150,13 +161,24 @@ func (a *App) wire() error {
 	}
 	orderHandler := handlers.NewOrderHandler(orderSvc, pub)
 
-	// 创建 MQ 消费者
+	// 创建 MQ 消费者（订单事件）
 	if a.mqClient != nil {
 		conn := a.mqClient.GetConnection()
 		if conn != nil {
 			a.mqConsumer, err = ordermq.NewConsumer(conn, orderSvc, a.cfg.RabbitMQ.Exchange)
 			if err != nil {
 				log.Printf("mq consumer init (optional): %v", err)
+			}
+		}
+	}
+
+	// 创建库存事件消费者
+	if a.mqClient != nil {
+		conn := a.mqClient.GetConnection()
+		if conn != nil {
+			a.inventoryConsumer, err = ordermq.NewInventoryConsumer(conn, orderSvc, a.cfg.RabbitMQ.Exchange)
+			if err != nil {
+				log.Printf("inventory mq consumer init (optional): %v", err)
 			}
 		}
 	}

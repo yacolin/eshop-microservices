@@ -30,6 +30,7 @@ type App struct {
 	mqClient    *mq.Client
 	engine      *gin.Engine
 	grpcServer  *grpc.Server
+	mqConsumer  *inventorymq.Consumer
 }
 
 // New 加载配置并创建 App，configPath 为空时从环境变量 CONFIG_PATH 读取，再默认 configs/inventory-service.yaml
@@ -75,10 +76,22 @@ func (a *App) Run() error {
 		}()
 	}
 
+	// 启动 MQ 消费者
+	if a.mqConsumer != nil {
+		if err := a.mqConsumer.Start(); err != nil {
+			log.Printf("mq consumer: %v", err)
+		}
+	}
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("shutting down...")
+
+	// 优雅关闭 MQ 消费者
+	if a.mqConsumer != nil {
+		a.mqConsumer.Stop()
+	}
 
 	// 优雅关闭 gRPC 服务
 	if a.grpcServer != nil {
@@ -130,6 +143,17 @@ func (a *App) wire() error {
 
 	// 创建 gRPC 服务器
 	a.grpcServer = grpc.NewServer(inventoryRepo, "50051")
+
+	// 创建 MQ 消费者
+	if a.mqClient != nil {
+		conn := a.mqClient.GetConnection()
+		if conn != nil {
+			a.mqConsumer, err = inventorymq.NewConsumer(conn, inventorySvc, a.cfg.RabbitMQ.Exchange)
+			if err != nil {
+				log.Printf("mq consumer init (optional): %v", err)
+			}
+		}
+	}
 
 	return nil
 }
