@@ -158,8 +158,9 @@ SELECT
 FROM permissions
 UNION ALL
 SELECT
-    CONCAT('角色 ', role_name, ' 权限数'),
+    CONCAT('角色 ', r.name, ' 权限数'),
     COUNT(*)
-FROM role_permissions
-GROUP BY role_name
+FROM role_permissions rp
+JOIN roles r ON rp.role_id = r.id
+GROUP BY r.name
 ORDER BY type;

@@ -87,14 +87,14 @@ func RequireRole(config *RequireRoleConfig, roleNames ...string) gin.HandlerFunc
 			roles = append(roles, role)
 		}
 
-		roleIDs := make([]string, 0, len(roles))
+		roleNamesFromDB := make([]string, 0, len(roles))
 		for _, role := range roles {
-			roleIDs = append(roleIDs, role.ID)
+			roleNamesFromDB = append(roleNamesFromDB, role.Name)
 		}
 
 		for _, userRole := range userRoles {
-			for _, roleID := range roleIDs {
-				if userRole == roleID {
+			for _, roleName := range roleNamesFromDB {
+				if userRole == roleName {
 					c.Next()
 					return
 				}
