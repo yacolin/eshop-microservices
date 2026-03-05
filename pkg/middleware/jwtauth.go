@@ -34,7 +34,6 @@ func JWTAuth() gin.HandlerFunc {
 			return
 		}
 
-		// extract user_id and store in context (supports string UUID or numeric ID)
 		userID, ok := claims["user_id"]
 		if !ok {
 			c.Error(errcode.ErrUnauthorized)
@@ -52,6 +51,19 @@ func JWTAuth() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		if roles, ok := claims["roles"]; ok {
+			if rolesSlice, ok := roles.([]interface{}); ok {
+				roleNames := make([]string, 0, len(rolesSlice))
+				for _, r := range rolesSlice {
+					if roleName, ok := r.(string); ok {
+						roleNames = append(roleNames, roleName)
+					}
+				}
+				c.Set("roles", roleNames)
+			}
+		}
+
 		c.Next()
 	}
 }

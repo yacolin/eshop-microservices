@@ -11,43 +11,48 @@ import (
 )
 
 type PermissionService interface {
-	// 基础 CRUD
 	CreatePermission(req *CreatePermissionRequest) (*models.Permission, error)
 	GetPermission(id string) (*models.Permission, error)
 	GetPermissionByName(name string) (*models.Permission, error)
 	UpdatePermission(id string, req *UpdatePermissionRequest) (*models.Permission, error)
 	DeletePermission(id string) error
 
-	// 查询
 	ListPermissions(page, pageSize int) (*ListPermissionsResponse, error)
 	GetPermissionsByCategory(category string, page, pageSize int) (*ListPermissionsResponse, error)
 	GetPermissionsByResource(resource string, page, pageSize int) (*ListPermissionsResponse, error)
-	GetPermissionsByRole(roleName string, page, pageSize int) (*ListPermissionsResponse, error)
+	GetPermissionsByRoleID(roleID string, page, pageSize int) (*ListPermissionsResponse, error)
 
-	// 角色权限管理
-	AssignPermissionToRole(roleName, permissionID string) error
-	RemovePermissionFromRole(roleName, permissionID string) error
-	GetRolePermissions(roleName string, page, pageSize int) (*ListRolePermissionsResponse, error)
-	BatchAssignPermissionsToRole(roleName string, permissionIDs []string) error
-	BatchRemovePermissionsFromRole(roleName string, permissionIDs []string) error
-
-	// 权限检查
-	CheckPermissions(roleNames []string, permissionNames []string) (map[string]bool, error)
+	CheckPermissionsByRoleIDs(roleIDs []string, permissionNames []string) (map[string]bool, error)
 	CheckUserPermissions(userID string, permissionNames []string) (map[string]bool, error)
+
+	CreateRole(req *CreateRoleRequest) (*models.Role, error)
+	GetRole(id string) (*models.Role, error)
+	GetRoleByName(name string) (*models.Role, error)
+	UpdateRole(id string, req *UpdateRoleRequest) (*models.Role, error)
+	DeleteRole(id string) error
+	ListRoles(page, pageSize int) (*ListRolesResponse, error)
+	AssignRoleToUser(userID, roleID string) error
+	RemoveRoleFromUser(userID, roleID string) error
+	GetUserRoles(userID string) ([]models.Role, error)
+	AssignPermissionsToRole(roleID string, permissionIDs []string) error
+	RemovePermissionsFromRole(roleID string, permissionIDs []string) error
 }
 
 type permissionService struct {
 	permissionRepo repositories.PermissionRepository
 	userRepo       repositories.UserRepository
+	roleRepo       repositories.RoleRepository
 }
 
 func NewPermissionService(
 	permissionRepo repositories.PermissionRepository,
 	userRepo repositories.UserRepository,
+	roleRepo repositories.RoleRepository,
 ) PermissionService {
 	return &permissionService{
 		permissionRepo: permissionRepo,
 		userRepo:       userRepo,
+		roleRepo:       roleRepo,
 	}
 }
 
@@ -227,7 +232,7 @@ func (s *permissionService) GetPermissionsByResource(resource string, page, page
 	}, nil
 }
 
-func (s *permissionService) GetPermissionsByRole(roleName string, page, pageSize int) (*ListPermissionsResponse, error) {
+func (s *permissionService) GetPermissionsByRoleID(roleID string, page, pageSize int) (*ListPermissionsResponse, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -236,7 +241,7 @@ func (s *permissionService) GetPermissionsByRole(roleName string, page, pageSize
 	}
 
 	offset := (page - 1) * pageSize
-	permissions, total, err := s.permissionRepo.ByRole(roleName, pageSize, offset)
+	permissions, total, err := s.permissionRepo.ByRoleID(roleID, pageSize, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -249,81 +254,11 @@ func (s *permissionService) GetPermissionsByRole(roleName string, page, pageSize
 	}, nil
 }
 
-func (s *permissionService) AssignPermissionToRole(roleName, permissionID string) error {
-	// 验证角色是否存在
-	validRoles := []string{models.RoleAdmin, models.RoleCustomer, models.RoleSystem, models.RoleMerchant, models.RoleOperator}
-	isValid := false
-	for _, r := range validRoles {
-		if r == roleName {
-			isValid = true
-			break
-		}
-	}
-	if !isValid {
-		return errors.New("invalid role name")
-	}
-
-	// 验证权限是否存在
-	_, err := s.permissionRepo.GetByID(permissionID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("permission not found")
-		}
-		return err
-	}
-
-	return s.permissionRepo.AssignPermissionToRole(roleName, permissionID)
-}
-
-func (s *permissionService) RemovePermissionFromRole(roleName, permissionID string) error {
-	return s.permissionRepo.RemovePermissionFromRole(roleName, permissionID)
-}
-
-func (s *permissionService) GetRolePermissions(roleName string, page, pageSize int) (*ListRolePermissionsResponse, error) {
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 || pageSize > 100 {
-		pageSize = 20
-	}
-
-	offset := (page - 1) * pageSize
-	rolePermissions, total, err := s.permissionRepo.GetRolePermissions(roleName, pageSize, offset)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ListRolePermissionsResponse{
-		RolePermissions: rolePermissions,
-		Total:           total,
-		Page:            page,
-		PageSize:        pageSize,
-	}, nil
-}
-
-func (s *permissionService) BatchAssignPermissionsToRole(roleName string, permissionIDs []string) error {
-	for _, permissionID := range permissionIDs {
-		if err := s.AssignPermissionToRole(roleName, permissionID); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *permissionService) BatchRemovePermissionsFromRole(roleName string, permissionIDs []string) error {
-	for _, permissionID := range permissionIDs {
-		if err := s.RemovePermissionFromRole(roleName, permissionID); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *permissionService) CheckPermissions(roleNames []string, permissionNames []string) (map[string]bool, error) {
+func (s *permissionService) CheckPermissionsByRoleIDs(roleIDs []string, permissionNames []string) (map[string]bool, error) {
 	result := make(map[string]bool)
 
 	for _, permissionName := range permissionNames {
-		has, err := s.permissionRepo.HasPermission(roleNames, permissionName)
+		has, err := s.permissionRepo.HasPermissionByRoleIDs(roleIDs, permissionName)
 		if err != nil {
 			return nil, err
 		}
@@ -334,11 +269,150 @@ func (s *permissionService) CheckPermissions(roleNames []string, permissionNames
 }
 
 func (s *permissionService) CheckUserPermissions(userID string, permissionNames []string) (map[string]bool, error) {
-	user, err := s.userRepo.GetByID(context.Background(), userID)
+	roles, err := s.roleRepo.GetUserRoles(context.Background(), userID)
 	if err != nil {
 		return nil, err
 	}
 
-	roleNames := user.GetRoles()
-	return s.CheckPermissions(roleNames, permissionNames)
+	roleIDs := make([]string, 0, len(roles))
+	for _, role := range roles {
+		roleIDs = append(roleIDs, role.ID)
+	}
+
+	return s.CheckPermissionsByRoleIDs(roleIDs, permissionNames)
+}
+
+type CreateRoleRequest struct {
+	Name        string `json:"name" binding:"required"`
+	DisplayName string `json:"display_name" binding:"required"`
+	Description string `json:"description"`
+	Status      int    `json:"status"`
+	Sort        int    `json:"sort"`
+	IsSystem    bool   `json:"is_system"`
+}
+
+type UpdateRoleRequest struct {
+	DisplayName *string `json:"display_name"`
+	Description *string `json:"description"`
+	Status      *int    `json:"status"`
+	Sort        *int    `json:"sort"`
+}
+
+type ListRolesResponse struct {
+	Roles  []models.Role `json:"roles"`
+	Total  int64         `json:"total"`
+	Page   int           `json:"page"`
+	PageSize int         `json:"page_size"`
+}
+
+func (s *permissionService) CreateRole(req *CreateRoleRequest) (*models.Role, error) {
+	role := &models.Role{
+		ID:          uuid.New().String(),
+		Name:        req.Name,
+		DisplayName: req.DisplayName,
+		Description: req.Description,
+		Status:      req.Status,
+		Sort:        req.Sort,
+		IsSystem:    req.IsSystem,
+	}
+
+	if role.Status == 0 {
+		role.Status = 1
+	}
+
+	if err := s.roleRepo.Create(context.Background(), role); err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
+func (s *permissionService) GetRole(id string) (*models.Role, error) {
+	return s.roleRepo.GetByID(context.Background(), id)
+}
+
+func (s *permissionService) GetRoleByName(name string) (*models.Role, error) {
+	return s.roleRepo.GetByName(context.Background(), name)
+}
+
+func (s *permissionService) UpdateRole(id string, req *UpdateRoleRequest) (*models.Role, error) {
+	role, err := s.roleRepo.GetByID(context.Background(), id)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.DisplayName != nil {
+		role.DisplayName = *req.DisplayName
+	}
+	if req.Description != nil {
+		role.Description = *req.Description
+	}
+	if req.Status != nil {
+		role.Status = *req.Status
+	}
+	if req.Sort != nil {
+		role.Sort = *req.Sort
+	}
+
+	if err := s.roleRepo.Update(context.Background(), role); err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
+func (s *permissionService) DeleteRole(id string) error {
+	return s.roleRepo.Delete(context.Background(), id)
+}
+
+func (s *permissionService) ListRoles(page, pageSize int) (*ListRolesResponse, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+
+	offset := (page - 1) * pageSize
+	roles, total, err := s.roleRepo.List(context.Background(), pageSize, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ListRolesResponse{
+		Roles:    roles,
+		Total:    total,
+		Page:     page,
+		PageSize: pageSize,
+	}, nil
+}
+
+func (s *permissionService) AssignRoleToUser(userID, roleID string) error {
+	return s.roleRepo.AssignRoleToUser(context.Background(), userID, roleID)
+}
+
+func (s *permissionService) RemoveRoleFromUser(userID, roleID string) error {
+	return s.roleRepo.RemoveRoleFromUser(context.Background(), userID, roleID)
+}
+
+func (s *permissionService) GetUserRoles(userID string) ([]models.Role, error) {
+	return s.roleRepo.GetUserRoles(context.Background(), userID)
+}
+
+func (s *permissionService) AssignPermissionsToRole(roleID string, permissionIDs []string) error {
+	for _, permissionID := range permissionIDs {
+		if err := s.roleRepo.AssignPermissionToRole(context.Background(), roleID, permissionID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *permissionService) RemovePermissionsFromRole(roleID string, permissionIDs []string) error {
+	for _, permissionID := range permissionIDs {
+		if err := s.roleRepo.RemovePermissionFromRole(context.Background(), roleID, permissionID); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -82,6 +82,8 @@ func (a *App) wire() error {
 		&models.LoginHistory{},
 		&models.Permission{},
 		&models.RolePermission{},
+		&models.Role{},
+		&models.UserRole{},
 	); err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}
@@ -105,31 +107,28 @@ func (a *App) wire() error {
 	tokenRepo := repositories.NewAuthTokenRepository(a.db)
 	loginHistoryRepo := repositories.NewLoginHistoryRepository(a.db)
 	permissionRepo := repositories.NewPermissionRepository(a.db)
+	roleRepo := repositories.NewRoleRepository(a.db)
 
-	// 初始化 token service
-	tokenSvc := service.NewTokenService(a.cfg.JWT.Secret, tokenRepo)
+	tokenSvc := service.NewTokenService(a.cfg.JWT.Secret, tokenRepo, roleRepo)
 
-	// 初始化 auth service
 	authSvc := service.NewAuthService(a.db, userRepo, identityRepo, tokenRepo, loginHistoryRepo, tokenSvc)
 
-	// 初始化 user service
 	userSvc := service.NewUserService(userRepo)
 	userSvc.SetJWTSecret(a.cfg.JWT.Secret)
 
-	// 初始化 permission service
-	permissionSvc := service.NewPermissionService(permissionRepo, userRepo)
+	permissionSvc := service.NewPermissionService(permissionRepo, userRepo, roleRepo)
 
 	var pub *usermq.Publisher
 	if a.mqClient != nil {
 		pub = usermq.NewPublisher(a.mqClient)
 	}
 
-	// 初始化 handlers
 	userHandler := handlers.NewUserHandler(userSvc, pub)
 	authHandler := handlers.NewAuthHandler(authSvc, tokenSvc, userSvc)
 	permissionHandler := handlers.NewPermissionHandler(permissionSvc, userSvc)
+	roleHandler := handlers.NewRoleHandler(permissionSvc)
 
 	a.engine = gin.New()
-	routes.Setup(a.engine, userHandler, authHandler, permissionHandler)
+	routes.Setup(a.engine, userHandler, authHandler, permissionHandler, roleHandler, roleRepo)
 	return nil
 }

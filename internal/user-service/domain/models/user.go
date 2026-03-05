@@ -2,34 +2,22 @@ package models
 
 import (
 	"eshop-microservices/pkg/utils"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-// 角色常量定义
-const (
-	RoleAdmin    = "admin"    // 超级管理员
-	RoleCustomer = "customer" // 普通用户
-	RoleSystem   = "system"   // 系统用户
-	RoleMerchant = "merchant" // 商家
-	RoleOperator = "operator" // 运营人员
-)
-
-// User 用户主表 - 只保留业务核心信息
-// 遵循 User.md 设计：User 表保存业务相关的用户信息
 type User struct {
 	ID     string `gorm:"type:varchar(36);primaryKey" json:"id"`
-	Roles  string `gorm:"type:varchar(255);default:'customer'" json:"roles"` // 逗号分隔的角色列表，如: "admin,customer"
-	Status int    `gorm:"type:tinyint;default:1" json:"status"`            // 1:正常 2:禁用
+	Status int    `gorm:"type:tinyint;default:1" json:"status"`
 
 	CreatedAt utils.Timestamp `json:"created_at" gorm:"type:timestamp;default:CURRENT_TIMESTAMP()"`
 	UpdatedAt utils.Timestamp `json:"updated_at" gorm:"type:timestamp;default:CURRENT_TIMESTAMP();onUpdate:CURRENT_TIMESTAMP()"`
 	DeletedAt gorm.DeletedAt  `gorm:"index" json:"-"`
 
 	UserInfo *UserInfo `gorm:"foreignKey:UserID" json:"user_info,omitempty"`
+	Roles    []Role    `gorm:"many2many:user_roles;" json:"roles,omitempty"`
 }
 
 func (User) TableName() string {
@@ -40,72 +28,9 @@ func (u *User) BeforeCreate(tx *gorm.DB) error {
 	if u.ID == "" {
 		u.ID = uuid.New().String()
 	}
-	// 设置默认值
-	if u.Roles == "" {
-		u.Roles = RoleCustomer
-	}
 	return nil
 }
 
-// GetRoles 获取角色列表
-func (u *User) GetRoles() []string {
-	if u.Roles == "" {
-		return []string{RoleCustomer}
-	}
-	return strings.Split(u.Roles, ",")
-}
-
-// HasRole 检查是否有指定角色
-func (u *User) HasRole(role string) bool {
-	roles := u.GetRoles()
-	for _, r := range roles {
-		if strings.TrimSpace(r) == role {
-			return true
-		}
-	}
-	return false
-}
-
-// HasAnyRole 检查是否有任意一个指定角色
-func (u *User) HasAnyRole(roles ...string) bool {
-	for _, role := range roles {
-		if u.HasRole(role) {
-			return true
-		}
-	}
-	return false
-}
-
-// AddRole 添加角色
-func (u *User) AddRole(role string) {
-	if u.HasRole(role) {
-		return
-	}
-	if u.Roles == "" {
-		u.Roles = role
-	} else {
-		u.Roles = u.Roles + "," + role
-	}
-}
-
-// RemoveRole 移除角色
-func (u *User) RemoveRole(role string) {
-	roles := u.GetRoles()
-	var newRoles []string
-	for _, r := range roles {
-		if strings.TrimSpace(r) != role {
-			newRoles = append(newRoles, r)
-		}
-	}
-	u.Roles = strings.Join(newRoles, ",")
-}
-
-// IsAdmin 检查是否为管理员（支持多角色）
-func (u *User) IsAdmin() bool {
-	return u.HasRole(RoleAdmin)
-}
-
-// IsActive 检查用户是否活跃
 func (u *User) IsActive() bool {
 	return u.Status == 1
 }

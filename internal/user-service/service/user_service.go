@@ -115,12 +115,6 @@ func (s *UserService) UpdateUserInfo(ctx context.Context, userID string, req dto
 	return userInfo, nil
 }
 
-// GetByID 根据ID获取用户
 func (s *UserService) GetByID(ctx context.Context, id string) (*models.User, error) {
 	return s.repo.GetByID(ctx, id)
-}
-
-// UpdateUserRoles 更新用户角色
-func (s *UserService) UpdateUserRoles(userID string, roles []string) error {
-	return s.repo.UpdateUserRoles(context.Background(), userID, roles)
 }

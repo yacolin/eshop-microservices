@@ -120,7 +120,7 @@ type PermissionListQuery struct {
 	pkgQuery.Pagination
 	Category string `form:"category"`
 	Resource string `form:"resource"`
-	Role     string `form:"role"`
+	RoleID   string `form:"role_id"`
 }
 
 // AssignPermissionToRoleRequest 分配权限给角色请求
@@ -140,10 +140,5 @@ type CheckPermissionsRequest struct {
 
 // CheckPermissionsResponse 检查权限响应
 type CheckPermissionsResponse struct {
-	Permissions map[string]bool `json:"permissions"` // key: permission_name, value: 是否有权限
-}
-
-// UpdateUserRoleRequest 更新用户角色请求
-type UpdateUserRoleRequest struct {
-	Roles []string `json:"roles" binding:"required" example:"admin,customer"`
+	Permissions map[string]bool `json:"permissions"`
 }

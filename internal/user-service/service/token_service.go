@@ -23,10 +23,11 @@ type TokenPair struct {
 
 // TokenClaims JWT Claims
 type TokenClaims struct {
-	UserID     string `json:"user_id"`
-	IdentityID string `json:"identity_id"`
-	Provider   string `json:"provider"`
-	JTI        string `json:"jti"`
+	UserID     string   `json:"user_id"`
+	IdentityID string   `json:"identity_id"`
+	Provider   string   `json:"provider"`
+	Roles      []string `json:"roles"`
+	JTI        string   `json:"jti"`
 	jwt.RegisteredClaims
 }
 
@@ -36,6 +37,7 @@ type TokenService struct {
 	accessExpiry  time.Duration
 	refreshExpiry time.Duration
 	tokenRepo     repositories.AuthTokenRepository
+	roleRepo      repositories.RoleRepository
 }
 
 // TokenServiceOption Token服务配置选项
@@ -56,12 +58,13 @@ func WithRefreshExpiry(expiry time.Duration) TokenServiceOption {
 }
 
 // NewTokenService 创建Token服务实例
-func NewTokenService(secret string, tokenRepo repositories.AuthTokenRepository, opts ...TokenServiceOption) *TokenService {
+func NewTokenService(secret string, tokenRepo repositories.AuthTokenRepository, roleRepo repositories.RoleRepository, opts ...TokenServiceOption) *TokenService {
 	svc := &TokenService{
 		secret:        []byte(secret),
 		accessExpiry:  2 * time.Hour,      // 默认2小时
 		refreshExpiry: 7 * 24 * time.Hour, // 默认7天
 		tokenRepo:     tokenRepo,
+		roleRepo:      roleRepo,
 	}
 
 	for _, opt := range opts {
@@ -75,16 +78,25 @@ func NewTokenService(secret string, tokenRepo repositories.AuthTokenRepository, 
 func (s *TokenService) GenerateTokenPair(ctx context.Context, userID, identityID, provider string, meta map[string]interface{}) (*TokenPair, error) {
 	now := time.Now()
 
-	// 生成JTI (JWT ID)
+	roles, err := s.roleRepo.GetUserRoles(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	roleNames := make([]string, 0, len(roles))
+	for _, role := range roles {
+		roleNames = append(roleNames, role.Name)
+	}
+
 	accessJTI := uuid.New().String()
 	refreshJTI := uuid.New().String()
 
-	// 生成Access Token
 	accessExpiresAt := now.Add(s.accessExpiry)
 	accessClaims := TokenClaims{
 		UserID:     userID,
 		IdentityID: identityID,
 		Provider:   provider,
+		Roles:      roleNames,
 		JTI:        accessJTI,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accessExpiresAt),
@@ -100,10 +112,10 @@ func (s *TokenService) GenerateTokenPair(ctx context.Context, userID, identityID
 		return nil, errcode.ErrGenerateAccessToken
 	}
 
-	// 生成Refresh Token
 	refreshExpiresAt := now.Add(s.refreshExpiry)
 	refreshClaims := TokenClaims{
 		UserID: userID,
+		Roles:  roleNames,
 		JTI:    refreshJTI,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(refreshExpiresAt),
@@ -119,7 +131,6 @@ func (s *TokenService) GenerateTokenPair(ctx context.Context, userID, identityID
 		return nil, errcode.ErrGenerateRefreshToken
 	}
 
-	// 将Refresh Token存入数据库（用于撤销）
 	metaJSON, _ := json.Marshal(meta)
 	dbToken := &models.AuthToken{
 		UserID:    userID,
@@ -148,10 +159,21 @@ func (s *TokenService) GenerateAccessToken(userID, identityID, provider string) 
 	expiresAt := now.Add(s.accessExpiry)
 	jti := uuid.New().String()
 
+	roles, err := s.roleRepo.GetUserRoles(context.Background(), userID)
+	if err != nil {
+		return "", time.Time{}, err
+	}
+
+	roleNames := make([]string, 0, len(roles))
+	for _, role := range roles {
+		roleNames = append(roleNames, role.Name)
+	}
+
 	claims := TokenClaims{
 		UserID:     userID,
 		IdentityID: identityID,
 		Provider:   provider,
+		Roles:      roleNames,
 		JTI:        jti,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
@@ -197,9 +219,7 @@ func (s *TokenService) ValidateToken(ctx context.Context, tokenString string) (*
 		return nil, err
 	}
 
-	// 检查token是否已撤销（仅检查refresh token）
 	if claims.ExpiresAt.After(time.Now().Add(s.accessExpiry)) {
-		// 可能是refresh token，检查是否已撤销
 		revoked, err := s.tokenRepo.IsRevoked(ctx, claims.JTI)
 		if err != nil {
 			return nil, err
@@ -214,13 +234,11 @@ func (s *TokenService) ValidateToken(ctx context.Context, tokenString string) (*
 
 // RefreshToken 刷新Token
 func (s *TokenService) RefreshToken(ctx context.Context, refreshToken string) (*TokenPair, error) {
-	// 1. 解析refresh token
 	claims, err := s.ParseToken(refreshToken)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. 检查refresh token是否已撤销
 	revoked, err := s.tokenRepo.IsRevoked(ctx, claims.JTI)
 	if err != nil {
 		return nil, err
@@ -229,12 +247,10 @@ func (s *TokenService) RefreshToken(ctx context.Context, refreshToken string) (*
 		return nil, errcode.ErrTokenRevoked
 	}
 
-	// 3. 撤销旧的refresh token
 	if err := s.tokenRepo.Revoke(ctx, claims.JTI); err != nil {
 		return nil, err
 	}
 
-	// 4. 生成新的token对
 	return s.GenerateTokenPair(ctx, claims.UserID, "", "", nil)
 }
 

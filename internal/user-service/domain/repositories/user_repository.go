@@ -15,7 +15,6 @@ type UserRepository interface {
 	Update(ctx context.Context, user *models.User) error
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, limit, offset int) ([]models.User, int64, error)
-	UpdateUserRoles(ctx context.Context, userID string, roles []string) error
 
 	CreateUserInfo(ctx context.Context, userInfo *models.UserInfo) error
 	GetUserInfoByUserID(ctx context.Context, userID string) (*models.UserInfo, error)
@@ -102,13 +101,4 @@ func (r *userRepository) GetUserInfoByUserID(ctx context.Context, userID string)
 
 func (r *userRepository) UpdateUserInfo(ctx context.Context, userInfo *models.UserInfo) error {
 	return r.db.WithContext(ctx).Save(userInfo).Error
-}
-
-func (r *userRepository) UpdateUserRoles(ctx context.Context, userID string, roles []string) error {
-	// 使用 User 模型中的方法构建 roles 字符串
-	tempUser := &models.User{ID: userID}
-	for _, role := range roles {
-		tempUser.AddRole(role)
-	}
-	return r.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", userID).Update("roles", tempUser.Roles).Error
 }

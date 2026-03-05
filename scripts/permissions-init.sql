@@ -1,7 +1,7 @@
 -- ====================================
 -- 权限初始化脚本
 -- ====================================
--- 用途: 初始化系统默认权限和角色权限映射
+-- 用途: 初始化系统默认权限、角色和角色权限映射
 -- 使用方式: mysql -u root -p user_db < scripts/permissions-init.sql
 -- ====================================
 
@@ -9,7 +9,22 @@ USE user_db;
 
 -- 清空现有权限和角色权限数据（可选，根据需要注释掉）
 -- TRUNCATE TABLE role_permissions;
+-- TRUNCATE TABLE roles;
 -- DELETE FROM permissions WHERE id IS NOT NULL;
+
+-- ====================================
+-- 插入默认角色
+-- ====================================
+INSERT INTO roles (id, name, display_name, description, status, sort, is_system, created_at, updated_at) VALUES
+(UUID(), 'admin', '管理员', '系统超级管理员，拥有所有权限', 1, 0, 1, NOW(), NOW()),
+(UUID(), 'customer', '普通用户', '普通用户，基础业务权限', 1, 1, 1, NOW(), NOW()),
+(UUID(), 'merchant', '商家', '商家用户，管理商品和订单', 1, 2, 1, NOW(), NOW()),
+(UUID(), 'operator', '运营人员', '运营人员，审核和管理业务', 1, 3, 1, NOW(), NOW()),
+(UUID(), 'system', '系统用户', '系统内部用户，用于系统间调用', 1, 4, 1, NOW(), NOW())
+ON DUPLICATE KEY UPDATE
+    display_name = VALUES(display_name),
+    description = VALUES(description),
+    updated_at = NOW();
 
 -- ====================================
 -- 插入默认权限
@@ -75,16 +90,20 @@ ON DUPLICATE KEY UPDATE
 -- ====================================
 
 -- Admin 角色拥有所有权限
-INSERT INTO role_permissions (id, role_name, permission_id, created_at)
-SELECT UUID(), 'admin', p.id, NOW()
-FROM permissions p
+INSERT INTO role_permissions (id, role_id, permission_id, created_at)
+SELECT UUID(), r.id, p.id, NOW()
+FROM roles r
+CROSS JOIN permissions p ON 1=1
+WHERE r.name = 'admin'
 ON DUPLICATE KEY UPDATE updated_at = NOW();
 
 -- Operator 运营人员权限
-INSERT INTO role_permissions (id, role_name, permission_id, created_at)
-SELECT UUID(), 'operator', p.id, NOW()
-FROM permissions p
-WHERE p.name IN (
+INSERT INTO role_permissions (id, role_id, permission_id, created_at)
+SELECT UUID(), r.id, p.id, NOW()
+FROM roles r
+CROSS JOIN permissions p ON 1=1
+WHERE r.name = 'operator'
+AND p.name IN (
     'user:read', 'user:list',
     'order:create', 'order:read', 'order:update', 'order:list', 'order:approve', 'order:reject',
     'product:read', 'product:list',
@@ -93,10 +112,12 @@ WHERE p.name IN (
 ON DUPLICATE KEY UPDATE updated_at = NOW();
 
 -- Merchant 商家权限
-INSERT INTO role_permissions (id, role_name, permission_id, created_at)
-SELECT UUID(), 'merchant', p.id, NOW()
-FROM permissions p
-WHERE p.name IN (
+INSERT INTO role_permissions (id, role_id, permission_id, created_at)
+SELECT UUID(), r.id, p.id, NOW()
+FROM roles r
+CROSS JOIN permissions p ON 1=1
+WHERE r.name = 'merchant'
+AND p.name IN (
     'order:create', 'order:read', 'order:list',
     'product:create', 'product:read', 'product:update', 'product:list',
     'inventory:create', 'inventory:read', 'inventory:update', 'inventory:list'
@@ -104,20 +125,24 @@ WHERE p.name IN (
 ON DUPLICATE KEY UPDATE updated_at = NOW();
 
 -- Customer 普通用户权限
-INSERT INTO role_permissions (id, role_name, permission_id, created_at)
-SELECT UUID(), 'customer', p.id, NOW()
-FROM permissions p
-WHERE p.name IN (
+INSERT INTO role_permissions (id, role_id, permission_id, created_at)
+SELECT UUID(), r.id, p.id, NOW()
+FROM roles r
+CROSS JOIN permissions p ON 1=1
+WHERE r.name = 'customer'
+AND p.name IN (
     'order:create', 'order:read', 'order:list',
     'product:read', 'product:list'
 )
 ON DUPLICATE KEY UPDATE updated_at = NOW();
 
 -- System 系统用户权限
-INSERT INTO role_permissions (id, role_name, permission_id, created_at)
-SELECT UUID(), 'system', p.id, NOW()
-FROM permissions p
-WHERE p.name IN (
+INSERT INTO role_permissions (id, role_id, permission_id, created_at)
+SELECT UUID(), r.id, p.id, NOW()
+FROM roles r
+CROSS JOIN permissions p ON 1=1
+WHERE r.name = 'system'
+AND p.name IN (
     'product:read', 'product:update',
     'inventory:read', 'inventory:update',
     'order:read', 'order:update'
