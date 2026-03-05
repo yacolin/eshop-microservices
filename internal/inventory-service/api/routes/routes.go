@@ -2,7 +2,7 @@ package routes
 
 import (
 	"eshop-microservices/internal/inventory-service/api/handlers"
-	"eshop-microservices/internal/inventory-service/api/middleware"
+	pkgmiddleware "eshop-microservices/pkg/middleware"
 
 	"github.com/gin-gonic/gin"
 
@@ -20,7 +20,7 @@ func Setup(
 	inventoryHandler *handlers.InventoryHandler,
 	categoryHandler *handlers.CategoryHandler,
 ) {
-	r.Use(middleware.Recovery(), middleware.Logger())
+	r.Use(pkgmiddleware.Recovery(), pkgmiddleware.Logger())
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "inventory ok"})

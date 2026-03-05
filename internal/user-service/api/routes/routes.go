@@ -2,7 +2,6 @@ package routes
 
 import (
 	"eshop-microservices/internal/user-service/api/handlers"
-	"eshop-microservices/internal/user-service/api/middleware"
 	"eshop-microservices/internal/user-service/domain/repositories"
 	pkgmiddleware "eshop-microservices/pkg/middleware"
 
@@ -10,7 +9,7 @@ import (
 )
 
 func Setup(r *gin.Engine, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler, permissionHandler *handlers.PermissionHandler, roleHandler *handlers.RoleHandler, roleRepo repositories.RoleRepository) {
-	r.Use(middleware.Recovery(), middleware.Logger(), pkgmiddleware.ErrorHandler())
+	r.Use(pkgmiddleware.Recovery(), pkgmiddleware.Logger(), pkgmiddleware.ErrorHandler())
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "user ok"})
@@ -56,8 +55,8 @@ func registerV1(api *gin.RouterGroup, userHandler *handlers.UserHandler, authHan
 			permissions.POST("/check", permissionHandler.CheckPermissions)
 		}
 
-		roleConfig := middleware.NewRequireRoleConfig(roleRepo)
-		admin := permissions.Group("").Use(pkgmiddleware.JWTAuth(), middleware.RequireAdmin(roleConfig))
+		roleConfig := pkgmiddleware.NewRequireRoleConfig(roleRepo)
+		admin := permissions.Group("").Use(pkgmiddleware.JWTAuth(), pkgmiddleware.RequireAdmin(roleConfig))
 		{
 			admin.POST("", permissionHandler.CreatePermission)
 			admin.PUT("/:id", permissionHandler.UpdatePermission)
@@ -74,8 +73,8 @@ func registerV1(api *gin.RouterGroup, userHandler *handlers.UserHandler, authHan
 			roles.GET("/name/:name", roleHandler.GetRoleByName)
 		}
 
-		roleConfig := middleware.NewRequireRoleConfig(roleRepo)
-		admin := roles.Group("").Use(pkgmiddleware.JWTAuth(), middleware.RequireAdmin(roleConfig))
+		roleConfig := pkgmiddleware.NewRequireRoleConfig(roleRepo)
+		admin := roles.Group("").Use(pkgmiddleware.JWTAuth(), pkgmiddleware.RequireAdmin(roleConfig))
 		{
 			admin.POST("", roleHandler.CreateRole)
 			admin.PUT("/:id", roleHandler.UpdateRole)
@@ -93,8 +92,8 @@ func registerV1(api *gin.RouterGroup, userHandler *handlers.UserHandler, authHan
 			userRoles.GET("", roleHandler.GetUserRoles)
 		}
 
-		roleConfig := middleware.NewRequireRoleConfig(roleRepo)
-		admin := userRoles.Group("").Use(pkgmiddleware.JWTAuth(), middleware.RequireMerchant(roleConfig))
+		roleConfig := pkgmiddleware.NewRequireRoleConfig(roleRepo)
+		admin := userRoles.Group("").Use(pkgmiddleware.JWTAuth(), pkgmiddleware.RequireMerchant(roleConfig))
 		{
 			admin.POST("", roleHandler.AssignRoleToUser)
 			admin.DELETE("/:role_id", roleHandler.RemoveRoleFromUser)

@@ -2,7 +2,7 @@ package routes
 
 import (
 	"eshop-microservices/internal/order-service/api/handlers"
-	"eshop-microservices/internal/order-service/api/middleware"
+	pkgmiddleware "eshop-microservices/pkg/middleware"
 
 	"github.com/gin-gonic/gin"
 
@@ -15,7 +15,7 @@ import (
 // Setup 注册路由
 // 版本策略：v1 / v2 并行运行，待 v2 稳定后再移除旧版本注册即可
 func Setup(r *gin.Engine, orderHandler *handlers.OrderHandler) {
-	r.Use(middleware.Recovery(), middleware.Logger())
+	r.Use(pkgmiddleware.Recovery(), pkgmiddleware.Logger())
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "order ok"})
