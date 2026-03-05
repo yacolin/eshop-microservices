@@ -246,6 +246,19 @@ eshop-microservices/
 - `PUT /api/v1/users/profile` 更新用户资料
 - `POST /api/v1/auth/refresh` 刷新 Token
 - `GET /health` 健康检查
+- `GET /api/v1/roles` 获取角色列表
+- `GET /api/v1/roles/:id` 获取角色详情
+- `POST /api/v1/roles` 创建角色（管理员）
+- `PUT /api/v1/roles/:id` 更新角色（管理员）
+- `DELETE /api/v1/roles/:id` 删除角色（管理员）
+- `POST /api/v1/roles/:id/permissions` 为角色分配权限（管理员）
+- `DELETE /api/v1/roles/:id/permissions` 移除角色的权限（管理员）
+- `GET /api/v1/users/:user_id/roles` 获取用户的角色列表
+- `POST /api/v1/users/:user_id/roles` 为用户分配角色（管理员）
+- `DELETE /api/v1/users/:user_id/roles/:role_id` 移除用户的角色（管理员）
+- `GET /api/v1/permissions` 获取权限列表
+- `GET /api/v1/permissions/:id` 获取权限详情
+- `POST /api/v1/permissions/check` 检查权限
 
 **核心功能**:
 
@@ -253,8 +266,10 @@ eshop-microservices/
 - ✅ JWT 认证
 - ✅ 密码加密
 - ✅ Token 刷新机制
-
-**依赖**: MySQL、Redis
+- ✅ RBAC 权限控制（基于角色的访问控制）
+- ✅ 动态角色管理
+- ✅ 细粒度权限控制（资源 + 操作）
+  **依赖**: MySQL、Redis
 
 ---
 
@@ -278,6 +293,8 @@ eshop-microservices/
 ### 中间件
 
 - **JWT 认证**: 统一的用户认证中间件
+- **RBAC 权限控制**: 基于角色的访问控制，支持动态角色管理
+- **RBAC 中间件**: RequireRole、RequireAdmin、RequireMerchant（位于 pkg/middleware）
 - **幂等性**: 基于 Redis 的请求幂等性控制
 - **错误处理**: 统一的错误码和响应格式
 - **日志**: Zap 结构化日志
