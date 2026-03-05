@@ -155,10 +155,12 @@ certs/
 generate_*
 User.md
 
-# Swagger generated docs
-docs/
-swagger.json
-swagger.yaml
+# docs include swagger generated files
+docs/swagger.json
+docs/swagger.yaml
+docs/docs.go
+docs/bugs.md
+docs/development_plan.md
 
 # Protocol Buffer generated files
 api/proto/*_pb.go

@@ -26,9 +26,15 @@ func NewRoleHandler(permissionSvc service.PermissionService) *RoleHandler {
 // @Tags 角色管理
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param request body service.CreateRoleRequest true "角色信息"
-// @Success 200 {object} response.Response{data=models.Role}
+// @Success 200 {object} response.Response{data=models.Role} "成功"
+// @Failure 400 {object} response.Response "请求参数错误"
+// @Failure 401 {object} response.Response "未授权"
+// @Failure 403 {object} response.Response "权限不足"
+// @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /api/v1/roles [post]
+// @Example request { "name": "editor", "display_name": "编辑员", "description": "内容编辑员", "status": 1, "sort": 5, "is_system": false }
 func (h *RoleHandler) CreateRole(c *gin.Context) {
 	var req service.CreateRoleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -47,13 +53,18 @@ func (h *RoleHandler) CreateRole(c *gin.Context) {
 
 // GetRole 获取角色详情
 // @Summary 获取角色详情
-// @Description 根据ID获取角色详情
+// @Description 根据ID获取角色详情，包含角色的权限列表
 // @Tags 角色管理
 // @Accept json
 // @Produce json
-// @Param id path string true "角色ID"
-// @Success 200 {object} response.Response{data=models.Role}
+// @Security BearerAuth
+// @Param id path string true "角色ID" format(uuid)
+// @Success 200 {object} response.Response{data=models.Role} "成功"
+// @Failure 401 {object} response.Response "未授权"
+// @Failure 404 {object} response.Response "角色不存在"
+// @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /api/v1/roles/{id} [get]
+// @Example id "550e8400-e29b-41d4-a716-446655440000"
 func (h *RoleHandler) GetRole(c *gin.Context) {
 	id := c.Param("id")
 	role, err := h.permissionSvc.GetRole(id)
@@ -133,14 +144,20 @@ func (h *RoleHandler) DeleteRole(c *gin.Context) {
 
 // ListRoles 获取角色列表
 // @Summary 获取角色列表
-// @Description 分页获取角色列表
+// @Description 分页获取角色列表，支持按页码和每页数量查询
 // @Tags 角色管理
 // @Accept json
 // @Produce json
-// @Param page query int false "页码" default(1)
-// @Param page_size query int false "每页数量" default(20)
-// @Success 200 {object} response.Response{data=service.ListRolesResponse}
+// @Security BearerAuth
+// @Param page query int false "页码" minimum(1) default(1)
+// @Param page_size query int false "每页数量" minimum(1) maximum(100) default(20)
+// @Success 200 {object} response.Response{data=service.ListRolesResponse} "成功"
+// @Failure 400 {object} response.Response "请求参数错误"
+// @Failure 401 {object} response.Response "未授权"
+// @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /api/v1/roles [get]
+// @Example page 1
+// @Example page_size 20
 func (h *RoleHandler) ListRoles(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -160,10 +177,18 @@ func (h *RoleHandler) ListRoles(c *gin.Context) {
 // @Tags 角色管理
 // @Accept json
 // @Produce json
-// @Param user_id path string true "用户ID"
-// @Param request body object true "角色信息"
-// @Success 200 {object} response.Response
+// @Security BearerAuth
+// @Param user_id path string true "用户ID" format(uuid)
+// @Param request body object{role_id=string} true "角色信息"
+// @Success 200 {object} response.Response{data=map[string]string} "成功"
+// @Failure 400 {object} response.Response "请求参数错误"
+// @Failure 401 {object} response.Response "未授权"
+// @Failure 403 {object} response.Response "权限不足"
+// @Failure 404 {object} response.Response "用户或角色不存在"
+// @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /api/v1/users/{user_id}/roles [post]
+// @Example user_id "550e8400-e29b-41d4-a716-446655440000"
+// @Example request { "role_id": "660e8400-e29b-41d4-a716-446655440001" }
 func (h *RoleHandler) AssignRoleToUser(c *gin.Context) {
 	userID := c.Param("user_id")
 	var req struct {
