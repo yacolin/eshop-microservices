@@ -66,7 +66,10 @@ logs/
 *.local.yaml
 *.local.json
 *.docker.yaml
-config/
+# config/
+# config/development.yaml
+# config/test.yaml
+# config/production.yaml
 
 # Build artifacts
 dist/
