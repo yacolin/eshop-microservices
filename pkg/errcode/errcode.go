@@ -43,4 +43,10 @@ var (
 	ErrSaveRefreshToken         = &BizError{Code: 1023, Message: "save refresh token failed"}
 	ErrUnexpectedSigningMethod  = &BizError{Code: 1024, Message: "unexpected signing method"}
 	ErrParseToken               = &BizError{Code: 1025, Message: "parse token failed"}
+
+	// 权限相关错误
+	ErrPermissionNotFound      = &BizError{Code: 2001, Message: "permission not found"}
+	ErrPermissionAlreadyExists = &BizError{Code: 2002, Message: "permission already exists"}
+	ErrInvalidRoleName        = &BizError{Code: 2003, Message: "invalid role name"}
+	ErrInsufficientPermissions = &BizError{Code: 2004, Message: "insufficient permissions"}
 )

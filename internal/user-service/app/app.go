@@ -80,6 +80,8 @@ func (a *App) wire() error {
 		&models.UserIdentity{},
 		&models.AuthToken{},
 		&models.LoginHistory{},
+		&models.Permission{},
+		&models.RolePermission{},
 	); err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}
@@ -102,6 +104,7 @@ func (a *App) wire() error {
 	identityRepo := repositories.NewUserIdentityRepository(a.db)
 	tokenRepo := repositories.NewAuthTokenRepository(a.db)
 	loginHistoryRepo := repositories.NewLoginHistoryRepository(a.db)
+	permissionRepo := repositories.NewPermissionRepository(a.db)
 
 	// 初始化 token service
 	tokenSvc := service.NewTokenService(a.cfg.JWT.Secret, tokenRepo)
@@ -113,6 +116,9 @@ func (a *App) wire() error {
 	userSvc := service.NewUserService(userRepo)
 	userSvc.SetJWTSecret(a.cfg.JWT.Secret)
 
+	// 初始化 permission service
+	permissionSvc := service.NewPermissionService(permissionRepo, userRepo)
+
 	var pub *usermq.Publisher
 	if a.mqClient != nil {
 		pub = usermq.NewPublisher(a.mqClient)
@@ -121,8 +127,9 @@ func (a *App) wire() error {
 	// 初始化 handlers
 	userHandler := handlers.NewUserHandler(userSvc, pub)
 	authHandler := handlers.NewAuthHandler(authSvc, tokenSvc, userSvc)
+	permissionHandler := handlers.NewPermissionHandler(permissionSvc, userSvc)
 
 	a.engine = gin.New()
-	routes.Setup(a.engine, userHandler, authHandler)
+	routes.Setup(a.engine, userHandler, authHandler, permissionHandler)
 	return nil
 }

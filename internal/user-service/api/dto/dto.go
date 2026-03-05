@@ -92,3 +92,58 @@ type UpdateUserInfoRequest struct {
 type UserListQuery struct {
 	pkgQuery.Pagination
 }
+
+// ========== 权限相关 DTO ==========
+
+// CreatePermissionRequest 创建权限请求
+type CreatePermissionRequest struct {
+	Name        string `json:"name" binding:"required" example:"order:create"`
+	DisplayName string `json:"display_name" binding:"required" example:"创建订单"`
+	Description string `json:"description" example:"创建新订单"`
+	Resource    string `json:"resource" binding:"required" example:"order"`
+	Action      string `json:"action" binding:"required" example:"create"`
+	Category    string `json:"category" example:"business"`
+	Sort        int    `json:"sort" example:"0"`
+}
+
+// UpdatePermissionRequest 更新权限请求
+type UpdatePermissionRequest struct {
+	DisplayName *string `json:"display_name" example:"更新显示名称"`
+	Description *string `json:"description" example:"更新描述"`
+	Category    *string `json:"category" example:"admin"`
+	Sort        *int    `json:"sort" example:"10"`
+	Status      *int    `json:"status" example:"1"`
+}
+
+// PermissionListQuery 权限列表查询
+type PermissionListQuery struct {
+	pkgQuery.Pagination
+	Category string `form:"category"`
+	Resource string `form:"resource"`
+	Role     string `form:"role"`
+}
+
+// AssignPermissionToRoleRequest 分配权限给角色请求
+type AssignPermissionToRoleRequest struct {
+	PermissionID string `json:"permission_id" binding:"required" example:"permission-id"`
+}
+
+// BatchAssignPermissionsToRoleRequest 批量分配权限给角色请求
+type BatchAssignPermissionsToRoleRequest struct {
+	PermissionIDs []string `json:"permission_ids" binding:"required"`
+}
+
+// CheckPermissionsRequest 检查权限请求
+type CheckPermissionsRequest struct {
+	PermissionNames []string `json:"permission_names" binding:"required" example:"order:create,product:read"`
+}
+
+// CheckPermissionsResponse 检查权限响应
+type CheckPermissionsResponse struct {
+	Permissions map[string]bool `json:"permissions"` // key: permission_name, value: 是否有权限
+}
+
+// UpdateUserRoleRequest 更新用户角色请求
+type UpdateUserRoleRequest struct {
+	Roles []string `json:"roles" binding:"required" example:"admin,customer"`
+}
