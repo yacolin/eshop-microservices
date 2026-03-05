@@ -79,7 +79,6 @@ eshop-microservices/
 │   │   │   ├── dto/
 │   │   │   ├── grpc/               # gRPC 服务端
 │   │   │   ├── handlers/
-│   │   │   ├── middleware/
 │   │   │   └── routes/
 │   │   ├── app/
 │   │   ├── domain/
@@ -93,7 +92,6 @@ eshop-microservices/
 │   │   ├── api/
 │   │   │   ├── dto/
 │   │   │   ├── handlers/
-│   │   │   ├── middleware/
 │   │   │   └── routes/
 │   │   ├── app/
 │   │   ├── clients/
@@ -112,48 +110,85 @@ eshop-microservices/
 │       ├── api/
 │       │   ├── dto/
 │       │   ├── handlers/
-│       │   ├── middleware/
+│       │   │   ├── auth_handler.go
+│       │   │   ├── permission_handler.go
+│       │   │   ├── role_handler.go
+│       │   │   └── user_handler.go
 │       │   └── routes/
 │       ├── app/
 │       ├── domain/
 │       │   ├── auth/
+│       │   │   └── provider.go
 │       │   ├── models/
+│       │   │   ├── auth_token.go
+│       │   │   ├── permission.go
+│       │   │   ├── role.go
+│       │   │   ├── user.go
+│       │   │   └── user_identity.go
 │       │   └── repositories/
+│       │       ├── auth_token_repository.go
+│       │       ├── permission_repository.go
+│       │       ├── role_repository.go
+│       │       ├── user_identity_repository.go
+│       │       └── user_repository.go
 │       ├── mq/
 │       │   └── publisher.go
 │       └── service/
+│           ├── auth_service.go
+│           ├── permission_service.go
+│           ├── token_service.go
+│           └── user_service.go
 ├── pkg/
+│   ├── config/
+│   │   └── config.go
 │   ├── database/
 │   │   ├── mysql.go
 │   │   └── redis.go
 │   ├── errcode/
+│   │   └── errcode.go
 │   ├── logger/
+│   │   └── logger.go
 │   ├── middleware/
 │   │   ├── errorhandler.go
 │   │   ├── idempotency.go
-│   │   └── jwtauth.go
+│   │   ├── jwtauth.go
+│   │   ├── logger.go
+│   │   ├── rbac.go
+│   │   └── recovery.go
 │   ├── mq/
 │   │   ├── event.go
 │   │   └── mq.go
 │   ├── query/
+│   │   └── query.go
 │   ├── response/
+│   │   └── response.go
 │   ├── saga/
 │   │   ├── memory_log.go
 │   │   ├── redis_log.go
 │   │   └── saga.go
 │   └── utils/
+│       ├── cryptopwd.go
+│       ├── timestamp.go
+│       └── utils.go
 ├── configs/
 │   ├── inventory-service.yaml
 │   ├── order-service.yaml
 │   └── user-service.yaml
+├── docs/
+│   ├── CLIENT_INTEGRATION.md        # 客户端集成指南
+│   ├── DEVELOPMENT_PLAN.md        # 开发计划
+│   ├── ERROR_CODES.md              # 错误码文档
+│   └── bugs.md                   # 已修复的 Bug 列表
 ├── nginx/
 │   └── nginx.conf
 ├── scripts/
 │   ├── install-deps.ps1
-│   └── mysql-init.sql
+│   ├── mysql-init.sql
+│   ├── permissions-init.sql        # 权限初始化脚本
+│   ├── rbac-migration.sql         # RBAC 数据迁移脚本
+│   └── user-roles-init.sql        # 用户角色初始化脚本
 ├── .dockerignore
 ├── .gitignore
-├── DEVELOPMENT_PLAN.md
 ├── Dockerfile
 ├── docker-compose.yml
 ├── go.mod
