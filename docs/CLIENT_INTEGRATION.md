@@ -168,6 +168,12 @@ Content-Type: application/json
 }
 ```
 
+**注意**：
+- `is_system: true` 表示系统内置角色，通常由系统初始化时创建
+- 系统内置角色（如 admin、customer、merchant、operator、system）不能被修改或删除
+- 用户自定义角色应设置 `is_system: false`
+- 只有超级管理员才能创建系统角色
+
 ### 为用户分配角色（需要管理员权限）
 
 ```bash

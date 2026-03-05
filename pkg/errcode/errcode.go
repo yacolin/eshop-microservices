@@ -49,4 +49,6 @@ var (
 	ErrPermissionAlreadyExists = &BizError{Code: 2002, Message: "permission already exists"}
 	ErrInvalidRoleName        = &BizError{Code: 2003, Message: "invalid role name"}
 	ErrInsufficientPermissions = &BizError{Code: 2004, Message: "insufficient permissions"}
+	ErrCannotModifySystemRole = &BizError{Code: 2005, Message: "cannot modify system role"}
+	ErrCannotDeleteSystemRole = &BizError{Code: 2006, Message: "cannot delete system role"}
 )

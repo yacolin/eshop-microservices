@@ -2,9 +2,10 @@ package service
 
 import (
 	"context"
+	"errors"
 	"eshop-microservices/internal/user-service/domain/models"
 	"eshop-microservices/internal/user-service/domain/repositories"
-	"errors"
+	"eshop-microservices/pkg/errcode"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -299,10 +300,10 @@ type UpdateRoleRequest struct {
 }
 
 type ListRolesResponse struct {
-	Roles  []models.Role `json:"roles"`
-	Total  int64         `json:"total"`
-	Page   int           `json:"page"`
-	PageSize int         `json:"page_size"`
+	Roles    []models.Role `json:"roles"`
+	Total    int64         `json:"total"`
+	Page     int           `json:"page"`
+	PageSize int           `json:"page_size"`
 }
 
 func (s *permissionService) CreateRole(req *CreateRoleRequest) (*models.Role, error) {
@@ -341,6 +342,10 @@ func (s *permissionService) UpdateRole(id string, req *UpdateRoleRequest) (*mode
 		return nil, err
 	}
 
+	if role.IsSystem {
+		return nil, errcode.ErrCannotModifySystemRole
+	}
+
 	if req.DisplayName != nil {
 		role.DisplayName = *req.DisplayName
 	}
@@ -362,6 +367,15 @@ func (s *permissionService) UpdateRole(id string, req *UpdateRoleRequest) (*mode
 }
 
 func (s *permissionService) DeleteRole(id string) error {
+	role, err := s.roleRepo.GetByID(context.Background(), id)
+	if err != nil {
+		return err
+	}
+
+	if role.IsSystem {
+		return errcode.ErrCannotDeleteSystemRole
+	}
+
 	return s.roleRepo.Delete(context.Background(), id)
 }
 

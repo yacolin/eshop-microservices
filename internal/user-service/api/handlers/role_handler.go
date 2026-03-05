@@ -98,14 +98,22 @@ func (h *RoleHandler) GetRoleByName(c *gin.Context) {
 
 // UpdateRole 更新角色
 // @Summary 更新角色
-// @Description 更新角色信息（需要管理员权限）
+// @Description 更新角色信息（需要管理员权限）。注意：系统内置角色（is_system=true）不能被修改。
 // @Tags 角色管理
 // @Accept json
 // @Produce json
-// @Param id path string true "角色ID"
+// @Security BearerAuth
+// @Param id path string true "角色ID" format(uuid)
 // @Param request body service.UpdateRoleRequest true "角色信息"
-// @Success 200 {object} response.Response{data=models.Role}
+// @Success 200 {object} response.Response{data=models.Role} "成功"
+// @Failure 400 {object} response.Response "请求参数错误"
+// @Failure 401 {object} response.Response "未授权"
+// @Failure 403 {object} response.Response "权限不足或尝试修改系统角色"
+// @Failure 404 {object} response.Response "角色不存在"
+// @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /api/v1/roles/{id} [put]
+// @Example id "550e8400-e29b-41d4-a716-446655440000"
+// @Example request { "display_name": "编辑员（更新）", "description": "更新后的描述" }
 func (h *RoleHandler) UpdateRole(c *gin.Context) {
 	id := c.Param("id")
 	var req service.UpdateRoleRequest
@@ -125,13 +133,20 @@ func (h *RoleHandler) UpdateRole(c *gin.Context) {
 
 // DeleteRole 删除角色
 // @Summary 删除角色
-// @Description 删除角色（需要管理员权限）
+// @Description 删除角色（需要管理员权限）。注意：系统内置角色（is_system=true）不能被删除。
 // @Tags 角色管理
 // @Accept json
 // @Produce json
-// @Param id path string true "角色ID"
-// @Success 200 {object} response.Response
+// @Security BearerAuth
+// @Param id path string true "角色ID" format(uuid)
+// @Success 200 {object} response.Response{data=map[string]string} "成功"
+// @Failure 400 {object} response.Response "请求参数错误"
+// @Failure 401 {object} response.Response "未授权"
+// @Failure 403 {object} response.Response "权限不足或尝试删除系统角色"
+// @Failure 404 {object} response.Response "角色不存在"
+// @Failure 500 {object} response.Response "服务器内部错误"
 // @Router /api/v1/roles/{id} [delete]
+// @Example id "550e8400-e29b-41d4-a716-446655440000"
 func (h *RoleHandler) DeleteRole(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.permissionSvc.DeleteRole(id); err != nil {
