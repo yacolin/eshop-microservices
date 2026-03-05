@@ -42,7 +42,15 @@ func registerV1(api *gin.RouterGroup, userHandler *handlers.UserHandler, authHan
 			protected.GET("/profile", userHandler.GetProfile)
 			protected.GET("/info", userHandler.GetUserInfo)
 			protected.PUT("/info", userHandler.UpdateUserInfo)
-			protected.GET("/:id", userHandler.GetByID)
+			protected.GET("/:user_id", userHandler.GetByID)
+			protected.GET("/:user_id/roles", roleHandler.GetUserRoles)
+		}
+
+		roleConfig := pkgmiddleware.NewRequireRoleConfig(roleRepo)
+		admin := users.Group("").Use(pkgmiddleware.JWTAuth(), pkgmiddleware.RequireMerchant(roleConfig))
+		{
+			admin.POST("/:user_id/roles", roleHandler.AssignRoleToUser)
+			admin.DELETE("/:user_id/roles/:role_id", roleHandler.RemoveRoleFromUser)
 		}
 	}
 
@@ -85,18 +93,4 @@ func registerV1(api *gin.RouterGroup, userHandler *handlers.UserHandler, authHan
 		}
 	}
 
-	userRoles := api.Group("/v1/users/:user_id/roles")
-	{
-		userRoles.Use(pkgmiddleware.JWTAuth())
-		{
-			userRoles.GET("", roleHandler.GetUserRoles)
-		}
-
-		roleConfig := pkgmiddleware.NewRequireRoleConfig(roleRepo)
-		admin := userRoles.Group("").Use(pkgmiddleware.JWTAuth(), pkgmiddleware.RequireMerchant(roleConfig))
-		{
-			admin.POST("", roleHandler.AssignRoleToUser)
-			admin.DELETE("/:role_id", roleHandler.RemoveRoleFromUser)
-		}
-	}
 }

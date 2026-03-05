@@ -82,7 +82,7 @@ func (h *UserHandler) UpdateUserInfo(c *gin.Context) {
 
 // GetByID 根据ID获取用户信息（管理员接口）
 func (h *UserHandler) GetByID(c *gin.Context) {
-	id := c.Param("id")
+	id := c.Param("user_id")
 	if id == "" {
 		c.Error(errcode.ErrInvalidParams)
 		return
