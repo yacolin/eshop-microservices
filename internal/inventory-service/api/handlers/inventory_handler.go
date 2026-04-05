@@ -23,7 +23,7 @@ func NewInventoryHandler(inventorySvc *service.InventoryService, publisher *mq.P
 // CreateInventory 创建库存
 // @Summary 创建库存
 // @Description 创建一个新的库存记录
-// @Tags 库存
+// @Tags inventories
 // @Accept json
 // @Produce json
 // @Param inventory body dto.CreateInventoryDTO true "库存信息"
@@ -49,7 +49,7 @@ func (h *InventoryHandler) CreateInventory(c *gin.Context) {
 // GetInventoryByID 获取库存详情
 // @Summary 获取库存详情
 // @Description 根据ID获取库存详细信息
-// @Tags 库存
+// @Tags inventories
 // @Produce json
 // @Param id path string true "库存ID"
 // @Success 200 {object} models.Inventory "成功"
@@ -67,7 +67,7 @@ func (h *InventoryHandler) GetInventoryByID(c *gin.Context) {
 // GetInventoryByProductID 根据产品ID获取库存
 // @Summary 根据产品ID获取库存
 // @Description 根据产品ID获取库存信息
-// @Tags 库存
+// @Tags inventories
 // @Produce json
 // @Param productId path string true "产品ID"
 // @Success 200 {object} models.Inventory "成功"
@@ -85,7 +85,7 @@ func (h *InventoryHandler) GetInventoryByProductID(c *gin.Context) {
 // UpdateInventory 更新库存
 // @Summary 更新库存
 // @Description 根据ID更新库存信息
-// @Tags 库存
+// @Tags inventories
 // @Accept json
 // @Produce json
 // @Param id path string true "库存ID"
@@ -113,7 +113,7 @@ func (h *InventoryHandler) UpdateInventory(c *gin.Context) {
 // DeleteInventory 删除库存
 // @Summary 删除库存
 // @Description 根据ID删除库存
-// @Tags 库存
+// @Tags inventories
 // @Produce json
 // @Param id path string true "库存ID"
 // @Success 200 {object} map[string]string "成功"
@@ -133,7 +133,7 @@ func (h *InventoryHandler) DeleteInventory(c *gin.Context) {
 // ListInventories 获取库存列表
 // @Summary 获取库存列表
 // @Description 获取库存列表，支持分页和筛选
-// @Tags 库存
+// @Tags inventories
 // @Produce json
 // @Param page query int false "页码，默认1"
 // @Param size query int false "每页大小，默认10"
@@ -161,7 +161,7 @@ func (h *InventoryHandler) ListInventories(c *gin.Context) {
 // ReserveInventory 预订库存
 // @Summary 预订库存
 // @Description 预订指定产品的库存
-// @Tags 库存操作
+// @Tags invOperate
 // @Accept json
 // @Produce json
 // @Param reserve body dto.ReserveInventoryDTO true "预订信息"
@@ -183,7 +183,7 @@ func (h *InventoryHandler) ReserveInventory(c *gin.Context) {
 // ReleaseInventory 释放库存
 // @Summary 释放库存
 // @Description 释放之前预订的库存
-// @Tags 库存操作
+// @Tags invOperate
 // @Accept json
 // @Produce json
 // @Param release body dto.ReleaseInventoryDTO true "释放信息"
@@ -205,7 +205,7 @@ func (h *InventoryHandler) ReleaseInventory(c *gin.Context) {
 // AdjustInventory 调整库存
 // @Summary 调整库存
 // @Description 调整指定产品的库存数量
-// @Tags 库存操作
+// @Tags invOperate
 // @Accept json
 // @Produce json
 // @Param adjust body dto.AdjustInventoryDTO true "调整信息"
@@ -227,7 +227,7 @@ func (h *InventoryHandler) AdjustInventory(c *gin.Context) {
 // CheckAvailability 检查库存可用性
 // @Summary 检查库存可用性
 // @Description 检查指定产品是否有足够的库存
-// @Tags 库存操作
+// @Tags invOperate
 // @Produce json
 // @Param product_id query string true "产品ID"
 // @Param quantity query int true "需要的数量"

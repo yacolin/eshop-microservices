@@ -27,6 +27,7 @@ Content-Type: application/json
 ```
 
 **响应示例：**
+
 ```json
 {
   "code": 0,
@@ -52,6 +53,7 @@ Content-Type: application/json
 ```
 
 **响应示例：**
+
 ```json
 {
   "code": 0,
@@ -99,6 +101,7 @@ Content-Type: application/json
 所有 API 响应遵循统一格式：
 
 **成功响应：**
+
 ```json
 {
   "code": 0,
@@ -108,6 +111,7 @@ Content-Type: application/json
 ```
 
 **错误响应：**
+
 ```json
 {
   "code": 1003,
@@ -126,6 +130,7 @@ Authorization: Bearer {access_token}
 ```
 
 **响应示例：**
+
 ```json
 {
   "code": 0,
@@ -169,6 +174,7 @@ Content-Type: application/json
 ```
 
 **注意**：
+
 - `is_system: true` 表示系统内置角色，通常由系统初始化时创建
 - 系统内置角色（如 admin、customer、merchant、operator、system）不能被修改或删除
 - 用户自定义角色应设置 `is_system: false`
@@ -623,6 +629,8 @@ except Exception as e:
 ## 联系支持
 
 如果遇到集成问题，请联系技术支持：
-- 邮箱：support@eshop.com
-- 文档：https://docs.eshop.com/api
-- 错误码文档：[ERROR_CODES.md](ERROR_CODES.md)
+
+- 邮箱：<support@eshop.com>
+- 文档：<https://docs.eshop.com/api>
+- 错误码文档：[ERROR\_CODES.md](ERROR_CODES.md)
+

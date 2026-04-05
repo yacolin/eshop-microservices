@@ -23,7 +23,7 @@ func NewCategoryHandler(inventorySvc *service.InventoryService, publisher *mq.Pu
 // CreateCategory 创建分类
 // @Summary 创建分类
 // @Description 创建一个新的分类
-// @Tags 分类
+// @Tags categories
 // @Accept json
 // @Produce json
 // @Param category body dto.CreateCategoryDTO true "分类信息"
@@ -49,7 +49,7 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 // GetCategoryByID 获取分类详情
 // @Summary 获取分类详情
 // @Description 根据ID获取分类详细信息
-// @Tags 分类
+// @Tags categories
 // @Produce json
 // @Param id path string true "分类ID"
 // @Success 200 {object} models.Category "成功"
@@ -67,7 +67,7 @@ func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
 // UpdateCategory 更新分类
 // @Summary 更新分类
 // @Description 根据ID更新分类信息
-// @Tags 分类
+// @Tags categories
 // @Accept json
 // @Produce json
 // @Param id path string true "分类ID"
@@ -95,7 +95,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 // DeleteCategory 删除分类
 // @Summary 删除分类
 // @Description 根据ID删除分类
-// @Tags 分类
+// @Tags categories
 // @Produce json
 // @Param id path string true "分类ID"
 // @Success 200 {object} map[string]string "成功"
@@ -115,7 +115,7 @@ func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 // ListCategories 获取分类列表
 // @Summary 获取分类列表
 // @Description 获取分类列表，支持分页
-// @Tags 分类
+// @Tags categories
 // @Produce json
 // @Param page query int false "页码，默认1"
 // @Param size query int false "每页大小，默认10"

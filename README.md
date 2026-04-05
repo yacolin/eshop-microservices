@@ -568,6 +568,13 @@ rabbitmq:
 # 启动所有服务（后台运行）
 docker-compose up -d
 
+# 重启所有服务
+docker-compose restart
+
+# 重启某个服务
+docker-compose restart <service_name>
+
+
 # 启动指定服务
 docker-compose up -d order-service
 
@@ -908,7 +915,6 @@ go test -cover ./...
    ```
 
 2. 检查队列状态：
-
    - 连接状态
    - 队列绑定
    - 消息积压

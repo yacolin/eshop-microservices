@@ -23,7 +23,7 @@ func NewProductHandler(inventorySvc *service.InventoryService, publisher *mq.Pub
 // CreateProduct 创建产品
 // @Summary 创建产品
 // @Description 创建一个新的产品
-// @Tags 产品
+// @Tags products
 // @Accept json
 // @Produce json
 // @Param product body dto.CreateProductDTO true "产品信息"
@@ -49,7 +49,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 // GetProductByID 获取产品详情
 // @Summary 获取产品详情
 // @Description 根据ID获取产品详细信息
-// @Tags 产品
+// @Tags products
 // @Produce json
 // @Param id path string true "产品ID"
 // @Success 200 {object} models.Product "成功"
@@ -67,7 +67,7 @@ func (h *ProductHandler) GetProductByID(c *gin.Context) {
 // UpdateProduct 更新产品
 // @Summary 更新产品
 // @Description 根据ID更新产品信息
-// @Tags 产品
+// @Tags products
 // @Accept json
 // @Produce json
 // @Param id path string true "产品ID"
@@ -95,7 +95,7 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 // DeleteProduct 删除产品
 // @Summary 删除产品
 // @Description 根据ID删除产品
-// @Tags 产品
+// @Tags products
 // @Produce json
 // @Param id path string true "产品ID"
 // @Success 200 {object} map[string]string "成功"
@@ -115,7 +115,7 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 // ListProducts 获取产品列表
 // @Summary 获取产品列表
 // @Description 获取产品列表，支持分页和筛选
-// @Tags 产品
+// @Tags products
 // @Produce json
 // @Param page query int false "页码，默认1"
 // @Param size query int false "每页大小，默认10"

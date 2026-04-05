@@ -22,6 +22,13 @@ func NewUserHandler(userSvc *service.UserService, publisher *mq.Publisher) *User
 }
 
 // GetProfile 获取用户资料（包含 User 和 UserInfo）
+// @Summary 获取用户资料
+// @Description 获取当前登录用户的资料信息（包含 User 和 UserInfo）
+// @Tags users
+// @Produce json
+// @Success 200 {object} response.APIResponse{data=models.User}
+// @Failure 401 {object} response.APIResponse{data=string} "未授权"
+// @Router /user/api/v1/profile [get]
 func (h *UserHandler) GetProfile(c *gin.Context) {
 	userID, err := h.getUserID(c)
 	if err != nil {
@@ -38,6 +45,13 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 }
 
 // GetUserInfo 获取用户详细信息
+// @Summary 获取用户详细信息
+// @Description 获取当前登录用户的详细信息（UserInfo）
+// @Tags users
+// @Produce json
+// @Success 200 {object} response.APIResponse{data=models.UserInfo}
+// @Failure 401 {object} response.APIResponse{data=string} "未授权"
+// @Router /user/api/v1/userinfo [get]
 func (h *UserHandler) GetUserInfo(c *gin.Context) {
 	userID, err := h.getUserID(c)
 	if err != nil {
@@ -54,6 +68,16 @@ func (h *UserHandler) GetUserInfo(c *gin.Context) {
 }
 
 // UpdateUserInfo 更新用户详细信息（Avatar、Nickname 等）
+// @Summary 更新用户详细信息
+// @Description 更新当前登录用户的详细信息（Avatar、Nickname 等）
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param request body dto.UpdateUserInfoRequest true "用户信息"
+// @Success 200 {object} response.APIResponse{data=models.UserInfo}
+// @Failure 400 {object} response.APIResponse{data=string} "请求参数错误"
+// @Failure 401 {object} response.APIResponse{data=string} "未授权"
+// @Router /user/api/v1/userinfo [put]
 func (h *UserHandler) UpdateUserInfo(c *gin.Context) {
 	userID, err := h.getUserID(c)
 	if err != nil {
@@ -81,6 +105,16 @@ func (h *UserHandler) UpdateUserInfo(c *gin.Context) {
 }
 
 // GetByID 根据ID获取用户信息（管理员接口）
+// @Summary 根据ID获取用户信息
+// @Description 根据ID获取用户信息（管理员接口）
+// @Tags users
+// @Produce json
+// @Param user_id path string true "用户ID"
+// @Success 200 {object} response.APIResponse{data=models.User}
+// @Failure 400 {object} response.APIResponse{data=string} "请求参数错误"
+// @Failure 401 {object} response.APIResponse{data=string} "未授权"
+// @Failure 403 {object} response.APIResponse{data=string} "权限不足"
+// @Router /user/api/v1/users/{user_id} [get]
 func (h *UserHandler) GetByID(c *gin.Context) {
 	id := c.Param("user_id")
 	if id == "" {

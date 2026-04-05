@@ -21,15 +21,15 @@ func NewOrderHandler(orderSvc *service.OrderService, publisher *mq.Publisher) *O
 	return &OrderHandler{orderSvc: orderSvc, publisher: publisher}
 }
 
-// Create 创建订单 POST /api/orders
+// Create 创建订单
 // @Summary 创建订单
 // @Description 创建一个新的订单
-// @Tags 订单
+// @Tags orders
 // @Accept json
 // @Produce json
 // @Param order body dto.CreateOrderDTO true "订单信息"
 // @Success 200 {object} models.Order "成功"
-// @Router /api/orders [post]
+// @Router /order/api/v1/orders [post]
 func (h *OrderHandler) Create(c *gin.Context) {
 	var req dto.CreateOrderDTO
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -47,10 +47,10 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	response.Success(c, order)
 }
 
-// List 订单列表 GET /api/orders
+// List 订单列表 GET
 // @Summary 获取订单列表
 // @Description 获取订单列表，支持分页和筛选
-// @Tags 订单
+// @Tags orders
 // @Produce json
 // @Param customer_id query int64 false "客户ID"
 // @Param status query string false "订单状态"
@@ -61,7 +61,7 @@ func (h *OrderHandler) Create(c *gin.Context) {
 // @Param page query int false "页码，默认1"
 // @Param size query int false "每页大小，默认10"
 // @Success 200 {object} response.APIResponse "成功"
-// @Router /api/orders [get]
+// @Router /order/api/v1/orders [get]
 func (h *OrderHandler) List(c *gin.Context) {
 	var q dto.OrderListQuery
 	if err := c.ShouldBindQuery(&q); err != nil {
@@ -81,14 +81,14 @@ func (h *OrderHandler) List(c *gin.Context) {
 
 }
 
-// GetByID 订单详情 GET /api/orders/:id
+// GetByID 订单详情 GET
 // @Summary 获取订单详情
 // @Description 根据ID获取订单详细信息
-// @Tags 订单
+// @Tags orders
 // @Produce json
 // @Param id path string true "订单ID"
 // @Success 200 {object} models.Order "成功"
-// @Router /api/orders/{id} [get]
+// @Router /order/api/v1/orders/{id} [get]
 func (h *OrderHandler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 	order, err := h.orderSvc.GetByID(c.Request.Context(), id)
@@ -99,16 +99,16 @@ func (h *OrderHandler) GetByID(c *gin.Context) {
 	response.Success(c, order)
 }
 
-// UpdateStatus 更新订单状态 PUT /api/orders/:id
+// UpdateStatus 更新订单状态
 // @Summary 更新订单状态
 // @Description 根据ID更新订单状态
-// @Tags 订单
+// @Tags orders
 // @Accept json
 // @Produce json
 // @Param id path string true "订单ID"
 // @Param status body object{status string} true "订单状态"
 // @Success 200 {object} map[string]string "成功"
-// @Router /api/orders/{id} [put]
+// @Router /order/api/v1/orders/{id} [put]
 func (h *OrderHandler) UpdateStatus(c *gin.Context) {
 	id := c.Param("id")
 	var body struct {
@@ -131,14 +131,14 @@ func (h *OrderHandler) UpdateStatus(c *gin.Context) {
 	response.Success(c, gin.H{"message": "updated"})
 }
 
-// Cancel 取消订单 DELETE /api/orders/:id
+// Cancel 取消订单
 // @Summary 取消订单
 // @Description 根据ID取消订单
-// @Tags 订单
+// @Tags orders
 // @Produce json
 // @Param id path string true "订单ID"
 // @Success 200 {object} map[string]string "成功"
-// @Router /api/orders/{id} [delete]
+// @Router /order/api/v1/orders/{id} [delete]
 func (h *OrderHandler) Cancel(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.orderSvc.Cancel(c.Request.Context(), id); err != nil {
@@ -151,14 +151,14 @@ func (h *OrderHandler) Cancel(c *gin.Context) {
 	response.Success(c, gin.H{"message": "cancelled"})
 }
 
-// GetSagaStatus 获取 Saga 执行状态 GET /api/orders/saga/:saga_id
+// GetSagaStatus 获取 Saga 执行状态
 // @Summary 获取 Saga 执行状态
 // @Description 根据 Saga ID 获取分布式事务执行状态
-// @Tags 订单
+// @Tags orders
 // @Produce json
 // @Param saga_id path string true "Saga ID"
 // @Success 200 {object} saga.Saga "成功"
-// @Router /api/orders/saga/{saga_id} [get]
+// @Router /order/api/v1/orders/saga/{saga_id} [get]
 func (h *OrderHandler) GetSagaStatus(c *gin.Context) {
 	sagaID := c.Param("saga_id")
 	saga, err := h.orderSvc.GetSagaStatus(c.Request.Context(), sagaID)

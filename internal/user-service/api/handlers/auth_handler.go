@@ -29,14 +29,13 @@ func NewAuthHandler(authService *service.AuthService, tokenService *service.Toke
 
 // @Summary 密码登录
 // @Description 使用用户名和密码登录
-// @Tags 认证
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param request body dto.PasswordLoginRequest true "登录参数"
-// @Success 200 {object} response.Response{data=dto.LoginResponse}
-// @Failure 400 {object} response.Response
-// @Failure 401 {object} response.Response
-// @Router /api/v1/auth/login/password [post]
+// @Success 200 {object} response.APIResponse{data=dto.LoginResponse}
+// @Failure 400 {object} response.APIResponse
+// @Router /user/api/v1/auth/login/password [post]
 func (h *AuthHandler) LoginByPassword(c *gin.Context) {
 	var req dto.PasswordLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -80,13 +79,13 @@ func (h *AuthHandler) LoginByPassword(c *gin.Context) {
 
 // @Summary 微信登录
 // @Description 使用微信code登录
-// @Tags 认证
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param request body dto.WechatLoginRequest true "登录参数"
-// @Success 200 {object} response.Response{data=dto.LoginResponse}
-// @Failure 400 {object} response.Response
-// @Router /api/v1/auth/login/wechat [post]
+// @Success 200 {object} response.APIResponse{data=dto.LoginResponse}
+// @Failure 400 {object} response.APIResponse
+// @Router /user/api/v1/auth/login/wechat [post]
 func (h *AuthHandler) LoginByWechat(c *gin.Context) {
 	var req dto.WechatLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -143,13 +142,13 @@ func (h *AuthHandler) LoginByWechat(c *gin.Context) {
 
 // @Summary 手机号登录
 // @Description 使用手机号和验证码登录
-// @Tags 认证
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param request body dto.PhoneLoginRequest true "登录参数"
-// @Success 200 {object} response.Response{data=dto.LoginResponse}
-// @Failure 400 {object} response.Response
-// @Router /api/v1/auth/login/phone [post]
+// @Success 200 {object} response.APIResponse{data=dto.LoginResponse}
+// @Failure 400 {object} response.APIResponse
+// @Router /user/api/v1/auth/login/phone [post]
 func (h *AuthHandler) LoginByPhone(c *gin.Context) {
 	var req dto.PhoneLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -203,13 +202,13 @@ func (h *AuthHandler) LoginByPhone(c *gin.Context) {
 
 // @Summary 用户注册
 // @Description 用户注册
-// @Tags 认证
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param request body dto.RegisterRequest true "注册参数"
-// @Success 200 {object} response.Response{data=dto.LoginResponse}
-// @Failure 400 {object} response.Response
-// @Router /api/v1/auth/register [post]
+// @Success 200 {object} response.APIResponse{data=dto.LoginResponse}
+// @Failure 400 {object} response.APIResponse
+// @Router /user/api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -253,13 +252,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 // @Summary 刷新Token
 // @Description 使用refresh token获取新的access token
-// @Tags 认证
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param request body dto.RefreshTokenRequest true "刷新参数"
-// @Success 200 {object} response.Response{data=dto.LoginResponse}
-// @Failure 400 {object} response.Response
-// @Router /api/v1/auth/refresh [post]
+// @Success 200 {object} response.APIResponse{data=dto.LoginResponse}
+// @Failure 400 {object} response.APIResponse
+// @Router /user/api/v1/auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -285,11 +284,11 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 // @Summary 登出
 // @Description 用户登出，撤销token
-// @Tags 认证
+// @Tags auth
 // @Accept json
 // @Produce json
-// @Success 200 {object} response.Response
-// @Router /api/v1/auth/logout [post]
+// @Success 200 {object} response.APIResponse
+// @Router /user/api/v1/auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	// 从header获取token
 	tokenString := c.GetHeader("Authorization")
@@ -310,11 +309,11 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 // @Summary 获取当前用户信息
 // @Description 获取当前登录用户信息
-// @Tags 认证
+// @Tags auth
 // @Accept json
 // @Produce json
-// @Success 200 {object} response.Response
-// @Router /api/v1/auth/me [get]
+// @Success 200 {object} response.APIResponse
+// @Router /user/api/v1/auth/me [get]
 func (h *AuthHandler) GetCurrentUser(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
