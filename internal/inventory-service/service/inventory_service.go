@@ -377,3 +377,81 @@ func (s *InventoryService) CheckAvailability(ctx context.Context, productID stri
 	available := inventory.Quantity - inventory.Reserved
 	return available >= quantity, nil
 }
+
+// CreateComment 创建评论
+func (s *InventoryService) CreateComment(ctx context.Context, req dto.CreateCommentDTO, userID string) (*models.Comment, error) {
+	// 检查商品是否存在
+	_, err := s.repo.GetProductByID(ctx, req.ProductID)
+	if err != nil {
+		return nil, fmt.Errorf("product with ID %s does not exist", req.ProductID)
+	}
+
+	// 如果是回复评论，检查父评论是否存在
+	if req.ParentID != nil {
+		_, err := s.repo.GetCommentByID(ctx, *req.ParentID)
+		if err != nil {
+			return nil, fmt.Errorf("parent comment with ID %s does not exist", *req.ParentID)
+		}
+	}
+
+	comment := &models.Comment{
+		ProductID: req.ProductID,
+		UserID:    userID,
+		Content:   req.Content,
+		Rating:    req.Rating,
+		ParentID:  req.ParentID,
+	}
+
+	if err := s.repo.CreateComment(ctx, comment); err != nil {
+		return nil, err
+	}
+
+	return comment, nil
+}
+
+// ListComments 获取评论列表
+func (s *InventoryService) ListComments(ctx context.Context, q dto.CommentListQuery) (*dto.CommentListResult, error) {
+	if q.Page <= 0 {
+		q.Page = 1
+	}
+	if q.Size <= 0 {
+		q.Size = 10
+	}
+	if q.Size > 100 {
+		q.Size = 100
+	}
+	offset := (q.Page - 1) * q.Size
+
+	list, err := s.repo.ListComments(ctx, q, offset, q.Size)
+	if err != nil {
+		return nil, err
+	}
+
+	total, err := s.repo.CountComments(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+
+	// 计算平均评分
+	avgRating, err := s.repo.GetAverageRating(ctx, q.ProductID)
+	if err != nil {
+		avgRating = 0
+	}
+
+	return &dto.CommentListResult{
+		Total:     total,
+		List:      list,
+		AvgRating: avgRating,
+	}, nil
+}
+
+// DeleteComment 删除评论
+func (s *InventoryService) DeleteComment(ctx context.Context, id string) error {
+	// 检查评论是否存在
+	_, err := s.repo.GetCommentByID(ctx, id)
+	if err != nil {
+		return errcode.ErrNotFound
+	}
+
+	return s.repo.DeleteComment(ctx, id)
+}

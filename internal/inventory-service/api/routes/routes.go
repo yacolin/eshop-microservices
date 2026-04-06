@@ -20,7 +20,7 @@ func Setup(
 	inventoryHandler *handlers.InventoryHandler,
 	categoryHandler *handlers.CategoryHandler,
 ) {
-	r.Use(pkgmiddleware.Recovery(), pkgmiddleware.Logger())
+	r.Use(pkgmiddleware.Recovery(), pkgmiddleware.Logger(), pkgmiddleware.ErrorHandler())
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "inventory ok"})
@@ -77,5 +77,14 @@ func registerV1(
 		categories.GET("/:id", categoryHandler.GetCategoryByID)
 		categories.PUT("/:id", categoryHandler.UpdateCategory)
 		categories.DELETE("/:id", categoryHandler.DeleteCategory)
+	}
+
+	// 评论相关路由：/api/v1/comments（支持带或不带末尾 /）
+	comments := api.Group("/v1/comments")
+	comments.Use(pkgmiddleware.JWTAuth())
+	{
+		comments.POST("", productHandler.CreateComment)
+		comments.GET("", productHandler.ListComments)
+		comments.DELETE("/:id", productHandler.DeleteComment)
 	}
 }

@@ -1,12 +1,25 @@
 package response
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"eshop-microservices/pkg/errcode"
+	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+// genTraceID 生成唯一的跟踪ID
+func genTraceID() string {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return fmt.Sprintf("t-%d", time.Now().UnixNano())
+	}
+	return hex.EncodeToString(b)
+}
 
 type APIResponse struct {
 	Code    int         `json:"code"`
@@ -59,10 +72,21 @@ func BindError(c *gin.Context, err error) {
 			tid = s
 		}
 	}
+	// 如果上下文中没有trace_id，生成一个新的
+	if tid == "" {
+		tid = genTraceID()
+		c.Set("trace_id", tid)
+		c.Writer.Header().Set("X-Trace-Id", tid)
+		c.Writer.Header().Set("X-Request-Id", tid)
+	}
 	// use business error code for invalid params
+	message := "invalid parameters"
+	if err != nil {
+		message = err.Error()
+	}
 	c.JSON(http.StatusUnprocessableEntity, APIResponse{
 		Code:    errcode.ErrInvalidParams.Code,
-		Message: "invalid parameters",
+		Message: message,
 		TraceID: tid,
 	})
 }

@@ -25,12 +25,12 @@ import (
 
 // App inventory-service 应用入口，负责配置加载、依赖装配与服务启动
 type App struct {
-	cfg         *config.Config
-	db          *gorm.DB
-	mqClient    *mq.Client
-	engine      *gin.Engine
-	grpcServer  *grpc.Server
-	mqConsumer  *inventorymq.Consumer
+	cfg        *config.Config
+	db         *gorm.DB
+	mqClient   *mq.Client
+	engine     *gin.Engine
+	grpcServer *grpc.Server
+	mqConsumer *inventorymq.Consumer
 }
 
 // New 加载配置并创建 App，configPath 为空时从环境变量 CONFIG_PATH 读取，再默认 configs/inventory-service.yaml
@@ -111,7 +111,12 @@ func (a *App) wire() error {
 	}
 	a.db = db
 	// 自动迁移数据库表
-	if err := a.db.AutoMigrate(&models.Category{}, &models.Product{}, &models.Inventory{}); err != nil {
+	if err := a.db.AutoMigrate(
+		&models.Category{},
+		&models.Product{},
+		&models.Inventory{},
+		&models.Comment{},
+	); err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}
 

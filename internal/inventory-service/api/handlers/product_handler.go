@@ -4,6 +4,7 @@ import (
 	"eshop-microservices/internal/inventory-service/api/dto"
 	"eshop-microservices/internal/inventory-service/mq"
 	"eshop-microservices/internal/inventory-service/service"
+	"eshop-microservices/pkg/errcode"
 	"eshop-microservices/pkg/response"
 
 	"github.com/gin-gonic/gin"
@@ -139,4 +140,94 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 		return
 	}
 	response.Success(c, result)
+}
+
+// CreateComment 创建评论
+// @Summary 创建评论
+// @Description 为商品创建评论
+// @Tags comments
+// @Accept json
+// @Produce json
+// @Param comment body dto.CreateCommentDTO true "评论信息"
+// @Success 200 {object} models.Comment "成功"
+// @Router /inventory/api/v1/comments [post]
+func (h *ProductHandler) CreateComment(c *gin.Context) {
+	var req dto.CreateCommentDTO
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(err)
+		return
+	}
+
+	// 从JWT中获取用户ID
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.Error(errcode.ErrUnauthorized)
+		return
+	}
+	userIDStr, ok := userID.(string)
+	if !ok {
+		c.Error(errcode.ErrUnauthorized)
+		return
+	}
+
+	comment, err := h.inventorySvc.CreateComment(c.Request.Context(), req, userIDStr)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	response.Success(c, comment)
+}
+
+// ListComments 获取评论列表
+// @Summary 获取评论列表
+// @Description 获取商品评论列表，支持分页和筛选
+// @Tags comments
+// @Produce json
+// @Param page query int false "页码，默认1"
+// @Param size query int false "每页大小，默认10"
+// @Param product_id query string true "商品ID"
+// @Param rating query int false "评分筛选"
+// @Param sort_by query string false "排序字段"
+// @Param order query string false "排序方式，默认desc"
+// @Success 200 {object} dto.CommentListResult "成功"
+// @Router /inventory/api/v1/comments [get]
+func (h *ProductHandler) ListComments(c *gin.Context) {
+	var q dto.CommentListQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		c.Error(err)
+		return
+	}
+
+	// normalize pagination values (ensure page>=1, 1<=size<=100)
+	(&q).Normalize()
+
+	result, err := h.inventorySvc.ListComments(c.Request.Context(), q)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	response.Success(c, result)
+}
+
+// DeleteComment 删除评论
+// @Summary 删除评论
+// @Description 删除指定ID的评论
+// @Tags comments
+// @Produce json
+// @Param id path string true "评论ID"
+// @Success 200 {object} map[string]string "成功"
+// @Router /inventory/api/v1/comments/{id} [delete]
+func (h *ProductHandler) DeleteComment(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.Error(errcode.ErrInvalidParams)
+		return
+	}
+
+	if err := h.inventorySvc.DeleteComment(c.Request.Context(), id); err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.Success(c, gin.H{"message": "deleted"})
 }

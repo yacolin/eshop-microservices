@@ -17,10 +17,38 @@ type Product struct {
 	CategoryID  *string    `gorm:"type:varchar(36);index" json:"category_id"`       // 分类ID
 	Category    *Category  `gorm:"foreignKey:CategoryID" json:"category"`           // 所属分类
 	Categories  []Category `gorm:"many2many:product_categories;" json:"categories"` // 多个分类
+	Comments    []Comment  `gorm:"foreignKey:ProductID" json:"comments,omitempty"`  // 商品评论
 
 	CreatedAt utils.Timestamp `json:"created_at" gorm:"type:timestamp;default:CURRENT_TIMESTAMP()"`
 	UpdatedAt utils.Timestamp `json:"updated_at" gorm:"type:timestamp;default:CURRENT_TIMESTAMP();onUpdate:CURRENT_TIMESTAMP()"`
 	DeletedAt gorm.DeletedAt  `gorm:"index" json:"-"`
+}
+
+// Comment 商品评论
+type Comment struct {
+	ID        string  `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ProductID string  `gorm:"type:varchar(36);index;not null" json:"product_id"`
+	UserID    string  `gorm:"type:varchar(36);index;not null" json:"user_id"`
+	Content   string  `gorm:"type:text;not null" json:"content"`
+	Rating    int     `gorm:"type:tinyint;not null" json:"rating"`     // 评分：1-5星
+	ParentID  *string `gorm:"type:varchar(36);index" json:"parent_id"` // 父评论ID，用于回复
+
+	CreatedAt utils.Timestamp `json:"created_at" gorm:"type:timestamp;default:CURRENT_TIMESTAMP()"`
+	UpdatedAt utils.Timestamp `json:"updated_at" gorm:"type:timestamp;default:CURRENT_TIMESTAMP();onUpdate:CURRENT_TIMESTAMP()"`
+	DeletedAt gorm.DeletedAt  `gorm:"index" json:"-"`
+}
+
+// TableName 评论表名
+func (Comment) TableName() string {
+	return "comments"
+}
+
+// BeforeCreate GORM 钩子：生成 UUID
+func (c *Comment) BeforeCreate(tx *gorm.DB) error {
+	if c.ID == "" {
+		c.ID = uuid.New().String()
+	}
+	return nil
 }
 
 // TableName 产品表名

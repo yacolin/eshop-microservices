@@ -109,3 +109,27 @@ type UpdateCategoryDTO struct {
 	Description *string `json:"description"`
 	ParentID    *string `json:"parent_id"`
 }
+
+// CreateCommentDTO 创建评论请求
+type CreateCommentDTO struct {
+	ProductID string  `json:"product_id" binding:"required"`
+	Content   string  `json:"content" binding:"required"`
+	Rating    int     `json:"rating" binding:"required,min=1,max=5"` // 评分：1-5星
+	ParentID  *string `json:"parent_id"` // 父评论ID，用于回复
+}
+
+// CommentListQuery 评论列表查询参数
+type CommentListQuery struct {
+	pkgQuery.Pagination
+	ProductID string `form:"product_id" binding:"required"` // 商品ID
+	Rating    int    `form:"rating"`                      // 评分筛选
+	SortBy    string `form:"sort_by"`                    // 排序字段，例如 rating, created_at
+	Order     string `form:"order,default=desc"`         // asc or desc
+}
+
+// CommentListResult 评论列表结果
+type CommentListResult struct {
+	Total    int64            `json:"total"`
+	List     []models.Comment `json:"list"`
+	AvgRating float64          `json:"avg_rating"` // 商品平均评分
+}

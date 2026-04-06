@@ -118,3 +118,28 @@ func (r *repository) ListCategories(ctx context.Context, q dto.CategoryListQuery
 func (r *repository) CountCategories(ctx context.Context, q dto.CategoryListQuery) (int64, error) {
 	return r.categoryRepo.CountCategories(ctx, q)
 }
+
+// Comment Operations
+func (r *repository) CreateComment(ctx context.Context, comment *models.Comment) error {
+	return r.productRepo.CreateComment(ctx, comment)
+}
+
+func (r *repository) GetCommentByID(ctx context.Context, id string) (*models.Comment, error) {
+	return r.productRepo.GetCommentByID(ctx, id)
+}
+
+func (r *repository) ListComments(ctx context.Context, q dto.CommentListQuery, offset, limit int) ([]models.Comment, error) {
+	return r.productRepo.ListComments(ctx, q, offset, limit)
+}
+
+func (r *repository) CountComments(ctx context.Context, q dto.CommentListQuery) (int64, error) {
+	return r.productRepo.CountComments(ctx, q)
+}
+
+func (r *repository) GetAverageRating(ctx context.Context, productID string) (float64, error) {
+	return r.productRepo.GetAverageRating(ctx, productID)
+}
+
+func (r *repository) DeleteComment(ctx context.Context, id string) error {
+	return r.productRepo.DeleteComment(ctx, id)
+}
